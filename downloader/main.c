@@ -102,12 +102,10 @@ char* solve_host_name(const char* url) {
 }
 
 int solve_port(const char* url) {
-	char* after = NULL;
-	if ((after = strstr(url, "://"))) { //is not null, has proto
-		after = strstr(after + 3, ":");//去掉前面的协议
-	} else {
-		after = strstr(url, ":");
-	}
+	char* after = (after = strstr(url, "://"))//is not null, has proto
+			    ? strstr(after + 3, ":") //去掉前面的协议
+			    : strstr(url, ":");
+
 	int result = 0;
 	if (after) {
 		sscanf(after, ":%d", &result);
@@ -163,7 +161,7 @@ int main(int argc, char *argv[])
 */
 	char* host;
 	int port;
-	char* pro = solve_url("https://www.baidu.com:8", &host, &port);
+	char* pro = solve_url(argv[1], &host, &port);
 	
 	printf("host: %s, port: %d, pro: %s\n", host, port, pro);
 
