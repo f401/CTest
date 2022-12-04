@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 	printf("host: %s, port: %d, pro: %s, file:%s\n", host, port, pro, request_file);
 
 
-	char buffer[1024 * 1024 * 2];
+	char buffer[1024 * 2];
 
 	int fd = create_connect(host_name_to_ip(host), port);
 	char* request_header = make_request_header(request_file, host);
@@ -173,20 +173,22 @@ int main(int argc, char *argv[])
 		SSL_write(ssl, request_header, strlen(request_header));
 	
 		printf("recvicing\n");
-		ssize_t size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
-		printf("size: %ld, msg: %s", size, buffer);
+		ssize_t size  = 0;
+		while ((size = SSL_read(ssl, buffer, sizeof(buffer))) > 0) {
+			printf("size: %ld, msg: %s", size, buffer);
+			memset(buffer, 0, sizeof(buffer));
+		}
 	
 		close_https_connect(ssl);
 		SSL_CTX_free(ctx);
 	} else {
 		send(fd, request_header, strlen(request_header), 0);	
 		printf("recvicing\n");
-		ssize_t size = 0;
-		while ((size = recv(fd, buffer, sizeof(buffer) - 1, 0)) > 0) {
+		ssize_t size  = 0;
+		while ((size = recv(fd, buffer, sizeof(buffer), 0)) > 0) {
 			printf("size: %ld, msg: %s", size, buffer);
 			memset(buffer, 0, sizeof(buffer));
 		}
-	
 	}
 	close(fd);
 	return 0;
