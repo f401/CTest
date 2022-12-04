@@ -19,8 +19,8 @@
 //setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 
 const char* REQUEST_HEADER = 
-"GET /download/e80d9b3bf5085002218d4be59e668bac718abbc6?name=client.jar HTTP/1.1\r\n"
-"Host: bmclapi2.bangbang93.com\r\n"
+"GET %s HTTP/1.1\r\n"
+"Host: %s\r\n"
 "Accept: */*\r\n"
 "User-Agent: aa\r\n\r\n";
 
@@ -133,37 +133,58 @@ char* solve_url(const char* url, char** host, int* port) {
 	return proto;
 }
 
+char* get_request_file_path(const char* url) {
+	char* tmp = (tmp = strstr(url, "://")) ? //has proto
+					strstr(tmp + 3, "/"):
+					strstr(url, "/");
+	return tmp ? tmp : "/";
+}
+
+char* make_request_header(const char* file, const char* domain) {
+	char* result = NULL;
+	asprintf(&result, REQUEST_HEADER, file, domain);
+	return result;
+}
+
 int main(int argc, char *argv[])
 {
-	/*char buffer[1024 * 1024 * 2];
-
-	int fd = create_connect(host_name_to_ip("6010f16780d7c5acec1b4134.openbmclapi.933.moe"), 4000);
-
-	INIT_SSL();
-
-	SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
-	printf("ctx: %p\n", ctx);
-	SSL* ssl = create_https_connect(ctx, fd);
-
-	printf("request header: %s\n", REQUEST_HEADER);
-	SSL_write(ssl, REQUEST_HEADER, strlen(REQUEST_HEADER));
-
-	printf("recvicing\n");
-	ssize_t size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
-	printf("size: %ld, msg: %s", size, buffer);
-
-	size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
-	printf("size: %ld, msg: %s", size, buffer);
-
-	close_https_connect(ssl);
-	close(fd);
-	SSL_CTX_free(ctx);
-*/
-	char* host;
 	int port;
-	char* pro = solve_url(argv[1], &host, &port);
-	
-	printf("host: %s, port: %d, pro: %s\n", host, port, pro);
+	char* host, * pro = solve_url(argv[1], &host, &port),
+		*request_file = get_request_file_path(argv[1]);
+	printf("host: %s, port: %d, pro: %s, file:%s\n", host, port, pro, request_file);
 
+
+	char buffer[1024 * 1024 * 2];
+
+	int fd = create_connect(host_name_to_ip(host), port);
+	char* request_header = make_request_header(request_file, host);
+	printf("request header: %s\n", request_header);
+	if (str_equals(pro, "https")) {
+		INIT_SSL();
+	
+		SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
+		SSL* ssl = create_https_connect(ctx, fd);
+	
+		SSL_write(ssl, request_header, strlen(request_header));
+	
+		printf("recvicing\n");
+		ssize_t size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
+		printf("size: %ld, msg: %s", size, buffer);
+	
+		size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
+		printf("size: %ld, msg: %s", size, buffer);
+		
+		close_https_connect(ssl);
+		SSL_CTX_free(ctx);
+	} else {
+		write(fd, request_header, strlen(request_header));	
+		printf("recvicing\n");
+		ssize_t size = read(fd, buffer, sizeof(buffer) - 1);
+		printf("size: %ld, msg: %s", size, buffer);
+	
+		size = read(fd, buffer, sizeof(buffer) - 1);
+		printf("size: %ld, msg: %s", size, buffer);
+	}
+	close(fd);
 	return 0;
 }
