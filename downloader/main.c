@@ -2,7 +2,9 @@
 
 #define HTTP_DEFAULT_PORT 80
 #define HTTPS_DEFAULT_PORT 443
+
 #define DEFAULT_PROTO "http"
+#define HTTP_VERSION "1.1"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,10 +18,11 @@
 
 #define PRINTF_ERROR(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
 
+#define str_equals(first, second) strcmp(first, second) == 0
 //setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 
 const char* REQUEST_HEADER = 
-"GET %s HTTP/1.1\r\n"
+"GET %s HTTP/"HTTP_VERSION"\r\n"
 "Host: %s\r\n"
 "Accept: */*\r\n"
 "User-Agent: aa\r\n\r\n";
@@ -72,7 +75,6 @@ SSL_shutdown(ssl);SSL_free(ssl);\
 
 #endif
 
-#define str_equals(first, second) strcmp(first, second) == 0
 
 char* solve_proto(const char* url) {
 	char* after_proto = strstr(url, "://"), *proto = NULL;
@@ -149,6 +151,7 @@ char* make_request_header(const char* file, const char* domain) {
 int main(int argc, char *argv[])
 {
 	int port;
+	struct timeval timeout = {5, 10};
 	char* host, * pro = solve_url(argv[1], &host, &port),
 		*request_file = get_request_file_path(argv[1]);
 	printf("host: %s, port: %d, pro: %s, file:%s\n", host, port, pro, request_file);
@@ -159,6 +162,8 @@ int main(int argc, char *argv[])
 	int fd = create_connect(host_name_to_ip(host), port);
 	char* request_header = make_request_header(request_file, host);
 	printf("request header: %s\n", request_header);
+
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 	if (str_equals(pro, "https")) {
 		INIT_SSL();
 	
@@ -171,19 +176,17 @@ int main(int argc, char *argv[])
 		ssize_t size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
 		printf("size: %ld, msg: %s", size, buffer);
 	
-		size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
-		printf("size: %ld, msg: %s", size, buffer);
-		
 		close_https_connect(ssl);
 		SSL_CTX_free(ctx);
 	} else {
-		write(fd, request_header, strlen(request_header));	
+		send(fd, request_header, strlen(request_header), 0);	
 		printf("recvicing\n");
-		ssize_t size = read(fd, buffer, sizeof(buffer) - 1);
-		printf("size: %ld, msg: %s", size, buffer);
+		ssize_t size = 0;
+		while ((size = recv(fd, buffer, sizeof(buffer) - 1, 0)) > 0) {
+			printf("size: %ld, msg: %s", size, buffer);
+			memset(buffer, 0, sizeof(buffer));
+		}
 	
-		size = read(fd, buffer, sizeof(buffer) - 1);
-		printf("size: %ld, msg: %s", size, buffer);
 	}
 	close(fd);
 	return 0;
