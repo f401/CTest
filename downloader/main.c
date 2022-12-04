@@ -187,6 +187,19 @@ char* make_request_header(const char* file, const char* domain) {
 	return result;
 }
 
+ResponeLine* get_respone_data(const char* header, char* http_version, int* http_respone_code, char* respone_message) {
+	char* dup = strdup(header);
+	
+	char* token = strtok(dup, "\r\n");
+	sscanf(token, "HTTP/%s %d %s", http_version, http_respone_code, respone_message);
+
+	while ((token = strtok(NULL, "\r\n")) != NULL) {
+		//TODO: FINISH
+	}
+
+	free(dup);
+}
+
 int main(int argc, char *argv[])
 {
 	int port;
@@ -215,6 +228,7 @@ int main(int argc, char *argv[])
 		printf("recvicing\n");
 		char *header = cut_out_https_header(ssl);
 		printf("header: %s\n \033[47;31mreal:\033[0m]\n", header);
+
 		ssize_t size = 0;
 		while ((size = SSL_read(ssl, buffer, sizeof(buffer))) > 0) {
 			printf("size: %ld, msg: %s", size, buffer);
