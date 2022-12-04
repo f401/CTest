@@ -27,6 +27,11 @@ const char* REQUEST_HEADER =
 "Accept: */*\r\n"
 "User-Agent: aa\r\n\r\n";
 
+typedef struct _ResponeLine {
+	char* key, value;
+	struct _ResponeLine* next;
+} ResponeLine;
+
 int create_connect(const char* ip, uint16_t port) {
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -73,8 +78,41 @@ SSL* create_https_connect(SSL_CTX* ctx, int fd) {
 SSL_shutdown(ssl);SSL_free(ssl);\
 }
 
+char* cut_out_https_header(SSL* ssl) {
+	char buffer, *header = (char* ) malloc(1);
+	ssize_t len = 1;
+	int flag = 0;
+	while (SSL_read(ssl, &buffer, 1) > 0) {
+		header[len - 1] = buffer;
+		if (buffer == '\n' || buffer == '\r') {
+			if (++flag == 4) {
+				break;
+			}
+		} else flag = 0;
+		header = (char* ) realloc(header, ++len);
+	}
+	header[len - 1] = 0;
+	return header;
+}
+
 #endif
 
+char* cut_out_http_header(int sockfd) {
+	char buffer, *header = (char* ) malloc(1);
+	ssize_t len = 1;
+	bool before_nr = false;
+	while (recv(sockfd, &buffer, 1, 0) > 0) {
+		header[len - 1] = buffer;
+		if (buffer == '\n' && len >= 2 && header[len - 2] == '\r') {
+			if (before_nr) {
+				break;
+			} else before_nr = true;
+		} else before_nr = false;
+		header = (char* ) realloc(header, ++len);
+	}
+	header[len - 1] = 0;
+	return header;
+}
 
 char* solve_proto(const char* url) {
 	char* after_proto = strstr(url, "://"), *proto = NULL;
@@ -142,6 +180,7 @@ char* get_request_file_path(const char* url) {
 	return tmp ? tmp : "/";
 }
 
+
 char* make_request_header(const char* file, const char* domain) {
 	char* result = NULL;
 	asprintf(&result, REQUEST_HEADER, file, domain);
@@ -164,6 +203,7 @@ int main(int argc, char *argv[])
 	printf("request header: %s\n", request_header);
 
 	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
+#ifdef ENABLE_HTTPS
 	if (str_equals(pro, "https")) {
 		INIT_SSL();
 	
@@ -173,7 +213,9 @@ int main(int argc, char *argv[])
 		SSL_write(ssl, request_header, strlen(request_header));
 	
 		printf("recvicing\n");
-		ssize_t size  = 0;
+		char *header = cut_out_https_header(ssl);
+		printf("header: %s\n \033[47;31mreal:\033[0m]\n", header);
+		ssize_t size = 0;
 		while ((size = SSL_read(ssl, buffer, sizeof(buffer))) > 0) {
 			printf("size: %ld, msg: %s", size, buffer);
 			memset(buffer, 0, sizeof(buffer));
@@ -181,7 +223,9 @@ int main(int argc, char *argv[])
 	
 		close_https_connect(ssl);
 		SSL_CTX_free(ctx);
-	} else {
+	} else 
+#endif 
+	{
 		send(fd, request_header, strlen(request_header), 0);	
 		printf("recvicing\n");
 		ssize_t size  = 0;
