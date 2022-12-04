@@ -15,13 +15,13 @@
 //setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 
 const char* REQUEST_HEADER = 
-"GET /version/1.7.10/client.jar HTTP/1.1\r\n"
+"GET /download/e80d9b3bf5085002218d4be59e668bac718abbc6?name=client.jar HTTP/1.1\r\n"
 "Host: bmclapi2.bangbang93.com\r\n"
 "Accept: */*\r\n"
 "User-Agent: aa\r\n\r\n";
 
 int create_connect(const char* ip, uint16_t port) {
-	int fd = socket(AF_INET, SOCK_STREAM, 0);
+	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	struct sockaddr_in fd_addr;
 	memset(&fd_addr, 0, sizeof(fd_addr));
@@ -47,7 +47,7 @@ char* host_name_to_ip(const char* host_name) {
 
 #include <openssl/ssl.h>
 
-#define SSL_INIT() {\
+#define INIT_SSL() {\
 SSL_library_init();\
 OpenSSL_add_all_algorithms();\
 SSL_load_error_strings();\
@@ -71,17 +71,29 @@ SSL_shutdown(ssl);SSL_free(ssl);\
 int main(int argc, char *argv[])
 {
 	struct timeval timeout = {5, 0};
-	int fd = create_connect(host_name_to_ip("bmclapi2.bangbang93.com"), 80);
-	char buffer[1024 * 1024];
-	memset(buffer, 0, 1024 * 1024);
-	printf("request header: %s\n", REQUEST_HEADER);
-	send(fd, REQUEST_HEADER, strlen(REQUEST_HEADER), 0);
-	printf("recvicing\n");
-	ssize_t size = recv(fd, buffer, sizeof(buffer) - 1, 0);
+	char buffer[1024 * 1024 * 2];
 
+	int fd = create_connect(host_name_to_ip("6010f16780d7c5acec1b4134.openbmclapi.933.moe"), 4000);
+
+	INIT_SSL();
+
+	SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
+	printf("ctx: %p\n", ctx);
+	SSL* ssl = create_https_connect(ctx, fd);
+
+	printf("request header: %s\n", REQUEST_HEADER);
+	SSL_write(ssl, REQUEST_HEADER, strlen(REQUEST_HEADER));
+
+	printf("recvicing\n");
+	ssize_t size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
 	printf("size: %ld, msg: %s", size, buffer);
-	
+
+	size = SSL_read(ssl, buffer, sizeof(buffer) - 1);
+	printf("size: %ld, msg: %s", size, buffer);
+
+	close_https_connect(ssl);
 	close(fd);
+	SSL_CTX_free(ctx);
 
 
 	return 0;
