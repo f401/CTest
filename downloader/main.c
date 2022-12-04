@@ -1,5 +1,9 @@
 #define ENABLE_HTTPS
 
+#define HTTP_DEFAULT_PORT 80
+#define HTTPS_DEFAULT_PORT 443
+#define DEFAULT_PROTO "http"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -68,10 +72,72 @@ SSL_shutdown(ssl);SSL_free(ssl);\
 
 #endif
 
+#define str_equals(first, second) strcmp(first, second) == 0
+
+char* solve_proto(const char* url) {
+	char* after_proto = strstr(url, "://"), *proto = NULL;
+	if (after_proto) {
+		for (ssize_t i = 0; i < strlen(url); i++) {
+			proto = proto ? (char* ) realloc(proto, i + 2) : calloc(1, 1);
+			if (url[i] == ':') break;
+		    proto[i] = url[i];    
+		}
+	} else {
+		proto = (char* ) calloc(1, strlen(DEFAULT_PROTO) + 1);
+		strcpy(proto, DEFAULT_PROTO);
+	}
+	return proto;
+}
+
+char* solve_host_name(const char* url) {
+	const char* after_proto = strstr(url, "://");
+	after_proto = after_proto ? after_proto + 3:url;//去掉前面的协议
+	char* hostname = NULL;
+	for (ssize_t i = 0; i < strlen(after_proto); i++) {
+		hostname = hostname ? (char* ) realloc(hostname, i + 2) : calloc(1, 1);
+		if (after_proto[i] == '/' || after_proto[i] == ':') break;
+		hostname[i] = after_proto[i];
+	}
+	return hostname;
+}
+
+int solve_port(const char* url) {
+	char* after = NULL;
+	if ((after = strstr(url, "://"))) { //is not null, has proto
+		after = strstr(after + 3, ":");//去掉前面的协议
+	} else {
+		after = strstr(url, ":");
+	}
+	int result = 0;
+	if (after) {
+		sscanf(after, ":%d", &result);
+	} 
+	return result;
+}
+
+char* solve_url(const char* url, char** host, int* port) {
+	char *proto = solve_proto(url);
+	int m_port = solve_port(url);
+	
+	
+	if (m_port == 0) {//default
+		if (str_equals(proto, "http")) {
+			*port = HTTP_DEFAULT_PORT;
+		} else if (str_equals(proto, "https")) {
+			*port = HTTPS_DEFAULT_PORT;
+		} else {
+			PRINTF_ERROR("Unknow proto %s\n", proto);
+		}
+	} else *port = m_port;
+
+	*host = solve_host_name(url);
+
+	return proto;
+}
+
 int main(int argc, char *argv[])
 {
-	struct timeval timeout = {5, 0};
-	char buffer[1024 * 1024 * 2];
+	/*char buffer[1024 * 1024 * 2];
 
 	int fd = create_connect(host_name_to_ip("6010f16780d7c5acec1b4134.openbmclapi.933.moe"), 4000);
 
@@ -94,7 +160,12 @@ int main(int argc, char *argv[])
 	close_https_connect(ssl);
 	close(fd);
 	SSL_CTX_free(ctx);
-
+*/
+	char* host;
+	int port;
+	char* pro = solve_url("https://www.baidu.com:8", &host, &port);
+	
+	printf("host: %s, port: %d, pro: %s\n", host, port, pro);
 
 	return 0;
 }
