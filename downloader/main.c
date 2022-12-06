@@ -1,10 +1,6 @@
 #define ENABLE_HTTPS
 
-#define HTTP_DEFAULT_PORT 80
-#define HTTPS_DEFAULT_PORT 443
-
-#define DEFAULT_PROTO "http"
-#define HTTP_VERSION "1.1"
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +14,18 @@
 
 #define PRINTF_ERROR(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
 
-#define str_equals(first, second) strcmp(first, second) == 0
+#define STR_EQUALS(first, second) strcmp(first, second) == 0
+
+#define PROTOCOL_HTTP "http"
+#define PROTOCOL_HTTPS "https"
+
+#define DEFAULT_PROTOCOL PROTOCOL_HTTP
+
+#define HTTP_VERSION "1.1"
+
+#define HTTP_DEFAULT_PORT 80
+#define HTTPS_DEFAULT_PORT 443
+
 //setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 
 const char* REQUEST_HEADER = 
@@ -32,7 +39,7 @@ typedef struct _ResponeLine {
 	struct _ResponeLine* next;
 } ResponeLine;
 
-int create_connect(const char* ip, uint16_t port) {
+int create_http_connect(const char* ip, uint16_t port) {
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	struct sockaddr_in fd_addr;
@@ -114,37 +121,46 @@ char* cut_out_http_header(int sockfd) {
 	return header;
 }
 
-char* solve_proto(const char* url) {
-	char* after_proto = strstr(url, "://"), *proto = NULL;
-	if (after_proto) {
+#define GET_AFTER_PROTOCOL(url) strstr(url, "://")
+
+#define solve_protocol(url) __solve_proto(url, GET_AFTER_PROTOCOL(url))
+
+char* __solve_protocol(const char* url, const char* after_protocol) {
+	char *protocol = NULL;
+	if (after_protocol) {
 		for (ssize_t i = 0; i < strlen(url); i++) {
-			proto = proto ? (char* ) realloc(proto, i + 2) : calloc(1, 1);
+			protocol = protocol ? (char* ) realloc(protocol, i + 2) : calloc(1, 1);
 			if (url[i] == ':') break;
-		    proto[i] = url[i];    
+		    protocol[i] = url[i];    
 		}
 	} else {
-		proto = (char* ) calloc(1, strlen(DEFAULT_PROTO) + 1);
-		strcpy(proto, DEFAULT_PROTO);
+		protocol = (char* ) calloc(1, strlen(DEFAULT_PROTOCOL) + 1);
+		strcpy(protocol, DEFAULT_PROTOCOL);
 	}
-	return proto;
+	return protocol;
 }
 
-char* solve_host_name(const char* url) {
-	const char* after_proto = strstr(url, "://");
-	after_proto = after_proto ? after_proto + 3:url;//去掉前面的协议
+#define solve_host_name(url) __solve_host_name(url, GET_AFTER_PROTOCOL(url))
+
+char* __solve_host_name(const char* url, const char* after_protocol) {
+
+	after_protocol = after_protocol ? after_protocol + 3:url;//去掉前面的协议
 	char* hostname = NULL;
-	for (ssize_t i = 0; i < strlen(after_proto); i++) {
+
+	for (ssize_t i = 0; i < strlen(after_protocol); i++) {
 		hostname = hostname ? (char* ) realloc(hostname, i + 2) : calloc(1, 1);
-		if (after_proto[i] == '/' || after_proto[i] == ':') break;
-		hostname[i] = after_proto[i];
+		if (after_protocol[i] == '/' || after_protocol[i] == ':') break;
+		hostname[i] = after_protocol[i];
 	}
 	return hostname;
 }
 
-int solve_port(const char* url) {
-	char* after = (after = strstr(url, "://"))//is not null, has proto
-			    ? strstr(after + 3, ":") //去掉前面的协议
-			    : strstr(url, ":");
+#define solve_port(url) __solve_port(url, GET_AFTER_PROTOCOL(url))
+
+int __solve_port(const char* url, const char* after) {
+	after = (after)//is not null, has proto
+		    ? strstr(after + 3, ":") //去掉前面的协议
+		    : strstr(url, ":");
 
 	int result = 0;
 	if (after) {
@@ -154,21 +170,23 @@ int solve_port(const char* url) {
 }
 
 char* solve_url(const char* url, char** host, int* port) {
-	char *proto = solve_proto(url);
-	int m_port = solve_port(url);
+	const char* after_proto = strstr(url, "://");
+
+	char *proto = __solve_protocol(url, after_proto);
+	int m_port = __solve_port(url, after_proto);
 	
 	
 	if (m_port == 0) {//default
-		if (str_equals(proto, "http")) {
+		if (STR_EQUALS(proto, "http")) {
 			*port = HTTP_DEFAULT_PORT;
-		} else if (str_equals(proto, "https")) {
+		} else if (STR_EQUALS(proto, "https")) {
 			*port = HTTPS_DEFAULT_PORT;
 		} else {
 			PRINTF_ERROR("Unknow proto %s\n", proto);
 		}
 	} else *port = m_port;
 
-	*host = solve_host_name(url);
+	*host = __solve_host_name(url, after_proto);
 
 	return proto;
 }
@@ -195,6 +213,8 @@ ResponeLine* get_respone_data(const char* header, char* http_version, int* http_
 
 	while ((token = strtok(NULL, "\r\n")) != NULL) {
 		//TODO: FINISH
+		printf("%s\n", token);
+
 	}
 
 	free(dup);
@@ -211,13 +231,17 @@ int main(int argc, char *argv[])
 
 	char buffer[1024 * 2];
 
-	int fd = create_connect(host_name_to_ip(host), port);
+	int fd = create_http_connect(host_name_to_ip(host), port);
 	char* request_header = make_request_header(request_file, host);
 	printf("request header: %s\n", request_header);
 
+	char http_version[10], respone_message[20];
+	int code;
+
+
 	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 #ifdef ENABLE_HTTPS
-	if (str_equals(pro, "https")) {
+	if (STR_EQUALS(pro, "https")) {
 		INIT_SSL();
 	
 		SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
@@ -228,6 +252,8 @@ int main(int argc, char *argv[])
 		printf("recvicing\n");
 		char *header = cut_out_https_header(ssl);
 		printf("header: %s\n \033[47;31mreal:\033[0m]\n", header);
+		
+		get_respone_data(header, http_version, &code, respone_message);
 
 		ssize_t size = 0;
 		while ((size = SSL_read(ssl, buffer, sizeof(buffer))) > 0) {
@@ -237,6 +263,8 @@ int main(int argc, char *argv[])
 	
 		close_https_connect(ssl);
 		SSL_CTX_free(ctx);
+
+		printf("http_version: %s, code: %d, respone_message: %s\n", http_version, code, respone_message);
 	} else 
 #endif 
 	{
