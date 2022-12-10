@@ -26,6 +26,28 @@
 #define HTTP_DEFAULT_PORT 80
 #define HTTPS_DEFAULT_PORT 443
 
+#define COLOR_FONT_BLACK "30"
+#define COLOR_FONT_RED "31"
+#define COLOR_FONT_GREEN "32"
+#define COLOR_FONT_YELLOW "33"
+#define COLOR_FONT_BLUE "34"
+
+#define COLOR_BACKGROUND_BLACK "30"
+#define COLOR_BACKGROUND_RED "31"
+#define COLOR_BACKGROUND_GREEN "32"
+#define COLOR_BACKGROUND_YELLOW "33"
+#define COLOR_BACKGROUND_BLUE "34"
+
+#define FONT_ATTR_CLEAN "0"
+#define FONT_ATTR_STRIKE "1"
+#define FONT_ATTR_UNDERLINE "4"
+#define FONT_ATTR_SHOOT "5"
+
+#define PRINT_STYLE_CLEANER() "\033[0m"
+#define PRINT_STYLE_MAKER3(attr, font_color, background_color) "\033["attr";"font_color";"background_color"m"
+#define PRINT_STYLE_MAKER2(font_color, background_color) "\033["font_color";"background_color"m"
+#define PRINT_STYLE_MAKER(color) "\033["color"m"
+
 //setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 
 const char* REQUEST_HEADER = 
@@ -222,6 +244,9 @@ ResponeLine* get_respone_data(const char* header, char* http_version, int* http_
 
 int main(int argc, char *argv[])
 {
+
+	printf(PRINT_STYLE_MAKER(COLOR_BACKGROUND_RED)"aaa\n"PRINT_STYLE_CLEANER());
+
 	int port;
 	struct timeval timeout = {5, 10};
 	char* host, * pro = solve_url(argv[1], &host, &port),
