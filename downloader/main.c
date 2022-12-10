@@ -232,16 +232,14 @@ ResponeLine* get_respone_data(const char* header, char* http_version, int* http_
 	static const char TOKEN[] = "\r\n";
 
 	char* dup = strdup(header);
-	
 	char* token = strtok(dup, TOKEN);
 	sscanf(token, "HTTP/%s %d %s", http_version, http_respone_code, respone_message);
-
 	while ((token = strtok(NULL, TOKEN)) != NULL) {
 		char *key = (char* )malloc(1), *value = (char*) malloc(1), *proccessing = key;
 		bool skip = false;
 		for (ssize_t i = 0, proccessingIndex = 0; i <= strlen(token)/*这里加 = 是为了把最后一个 \0 算进去*/; ++i) {
 			if (skip) {
-				skip = true;
+				skip = false;
 				continue;
 			}
 			if (token[i] == ':') {
@@ -250,7 +248,7 @@ ResponeLine* get_respone_data(const char* header, char* http_version, int* http_
 				proccessingIndex = 0;
 			} else {
 				proccessing[proccessingIndex] = token[i];
-				proccessing = (char* ) realloc(key, proccessingIndex);
+				proccessing = (char* ) realloc(key, ++proccessingIndex);
 			}
 		}
 	}
