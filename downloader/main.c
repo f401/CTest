@@ -228,15 +228,31 @@ char* make_request_header(const char* file, const char* domain) {
 }
 
 ResponeLine* get_respone_data(const char* header, char* http_version, int* http_respone_code, char* respone_message) {
+
+	static const char TOKEN[] = "\r\n";
+
 	char* dup = strdup(header);
 	
-	char* token = strtok(dup, "\r\n");
+	char* token = strtok(dup, TOKEN);
 	sscanf(token, "HTTP/%s %d %s", http_version, http_respone_code, respone_message);
 
-	while ((token = strtok(NULL, "\r\n")) != NULL) {
-		//TODO: FINISH
-		printf("%s\n", token);
-
+	while ((token = strtok(NULL, TOKEN)) != NULL) {
+		char *key = (char* )malloc(1), *value = (char*) malloc(1), *proccessing = key;
+		bool skip = false;
+		for (ssize_t i = 0, proccessingIndex = 0; i <= strlen(token)/*这里加 = 是为了把最后一个 \0 算进去*/; ++i) {
+			if (skip) {
+				skip = true;
+				continue;
+			}
+			if (token[i] == ':') {
+				skip = true;//下一个是一个空格
+				proccessing = value;
+				proccessingIndex = 0;
+			} else {
+				proccessing[proccessingIndex] = token[i];
+				proccessing = (char* ) realloc(key, proccessingIndex);
+			}
+		}
 	}
 
 	free(dup);
@@ -245,12 +261,11 @@ ResponeLine* get_respone_data(const char* header, char* http_version, int* http_
 int main(int argc, char *argv[])
 {
 
-	printf(PRINT_STYLE_MAKER(COLOR_BACKGROUND_RED)"aaa\n"PRINT_STYLE_CLEANER());
-
 	int port;
 	struct timeval timeout = {5, 10};
 	char* host, * pro = solve_url(argv[1], &host, &port),
 		*request_file = get_request_file_path(argv[1]);
+
 	printf("host: %s, port: %d, pro: %s, file:%s\n", host, port, pro, request_file);
 
 
@@ -262,7 +277,6 @@ int main(int argc, char *argv[])
 
 	char http_version[10], respone_message[20];
 	int code;
-
 
 	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 #ifdef ENABLE_HTTPS
@@ -276,7 +290,7 @@ int main(int argc, char *argv[])
 	
 		printf("recvicing\n");
 		char *header = cut_out_https_header(ssl);
-		printf("header: %s\n \033[47;31mreal:\033[0m]\n", header);
+		printf("header: %s\n, others\n", header);
 		
 		get_respone_data(header, http_version, &code, respone_message);
 
@@ -289,7 +303,6 @@ int main(int argc, char *argv[])
 		close_https_connect(ssl);
 		SSL_CTX_free(ctx);
 
-		printf("http_version: %s, code: %d, respone_message: %s\n", http_version, code, respone_message);
 	} else 
 #endif 
 	{
@@ -301,6 +314,8 @@ int main(int argc, char *argv[])
 			memset(buffer, 0, sizeof(buffer));
 		}
 	}
+
+	printf("http_version: %s, code: %d, respone_message: %s\n", http_version, code, respone_message);
 	close(fd);
 	return 0;
 }
