@@ -60,7 +60,7 @@ typedef struct _ResponeLine {
 	char* key, *value;
 } ResponeLine;
 
-int create_http_connect(const char* ip, uint16_t port) {
+int create_socket_connect(const char* ip, uint16_t port) {
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	struct sockaddr_in fd_addr;
@@ -99,6 +99,12 @@ if ((field) whatIsTrue) PRINTF_ERROR(msg"\nReason: %s", ERR_reason_error_string(
 SSL_library_init();\
 OpenSSL_add_all_algorithms();\
 SSL_load_error_strings();\
+}
+
+#define CLOSE_SSL() {\
+	ERR_free_strings();\
+	sk_SSL_COMP_free(SSL_COMP_get_compression_methods());\
+	EVP_cleanup();\
 }
 
 SSL* create_https_connect(SSL_CTX* ctx, int fd) {
@@ -287,10 +293,15 @@ void free_ResponeLine(ResponeLine* ptr, ssize_t size) {
 	free(ptr);
 }
 
+#define set_socket_timeout(fd, seconds, ms) \
+{\
+	struct timeval __timeout = {seconds, ms};\
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&__timeout, sizeof(struct timeval));\
+}
+
 int main(int argc, char *argv[])
 {
 	int port;
-	struct timeval timeout = {5, 10};
 	char *host, *pro = solve_url(argv[1], &host, &port),
 		*request_file = get_request_file_path(argv[1]);
 
@@ -299,7 +310,8 @@ int main(int argc, char *argv[])
 
 	char buffer[1024 * 2];
 
-	int fd = create_http_connect(host_name_to_ip(host), port);
+	int fd = create_socket_connect(host_name_to_ip(host), port);
+	set_socket_timeout(fd, 5, 0);
 	char* request_header = make_request_header(request_file, host);
 	printf("request header: %s\n", request_header);
 
@@ -308,7 +320,6 @@ int main(int argc, char *argv[])
 
 	ssize_t responeLine_size;
 
-	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 #ifdef ENABLE_HTTPS
 	if (STR_EQUALS(pro, "https")) {
 		INIT_SSL();
@@ -330,15 +341,14 @@ int main(int argc, char *argv[])
 			memset(buffer, 0, sizeof(buffer));
 		}
 	
-		close_https_connect(ssl);
-		SSL_CTX_free(ctx);
 		free(header);
 
-		ERR_free_strings();
-		sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
-		EVP_cleanup();
+		close_https_connect(ssl);
+		SSL_CTX_free(ctx);
 
-	} else 
+		CLOSE_SSL();
+
+		} else 
 #endif 
 	{
 		send(fd, request_header, strlen(request_header), 0);	
