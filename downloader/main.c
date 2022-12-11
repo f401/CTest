@@ -57,8 +57,7 @@ const char* REQUEST_HEADER =
 "User-Agent: aa\r\n\r\n";
 
 typedef struct _ResponeLine {
-	char* key, value;
-	struct _ResponeLine* next;
+	char* key, *value;
 } ResponeLine;
 
 int create_http_connect(const char* ip, uint16_t port) {
@@ -87,6 +86,14 @@ char* host_name_to_ip(const char* host_name) {
 #ifdef ENABLE_HTTPS
 
 #include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
+
+#define REQUIRE_SSL_RESULT_NOT_NULL(field, msg) __REQUIRE_SSL_RESULT_NOT_NULL(field, msg, == NULL)
+
+#define __REQUIRE_SSL_RESULT_NOT_NULL(field, msg, whatIsTrue) {\
+if ((field) whatIsTrue) PRINTF_ERROR(msg"\nReason: %s", ERR_reason_error_string(ERR_get_error()));\
+}
 
 #define INIT_SSL() {\
 SSL_library_init();\
@@ -96,17 +103,17 @@ SSL_load_error_strings();\
 
 SSL* create_https_connect(SSL_CTX* ctx, int fd) {
 	SSL* ssl = SSL_new(ctx);
-	SSL_set_fd(ssl, fd);
-	if (SSL_connect(ssl) == -1) {
-		PRINTF_ERROR("HTTPS connect failed\n");
-	}
+	REQUIRE_SSL_RESULT_NOT_NULL(ssl, "SSL is NULL.");
+	__REQUIRE_SSL_RESULT_NOT_NULL(SSL_set_fd(ssl, fd), "setfd failed!", == 0 /* NULL */);
+	__REQUIRE_SSL_RESULT_NOT_NULL(SSL_connect(ssl), "HTTPS connect failed\n", != 1);
 	return ssl;
 }
 
 #define close_https_connect(ssl) {\
-SSL_shutdown(ssl);SSL_free(ssl);\
+__REQUIRE_SSL_RESULT_NOT_NULL(SSL_shutdown(ssl), "SSL shutdown failed.", != 1);SSL_free(ssl);\
 }
 
+/** Remember to free */
 char* cut_out_https_header(SSL* ssl) {
 	char buffer, *header = (char* ) malloc(1);
 	ssize_t len = 1;
@@ -126,6 +133,7 @@ char* cut_out_https_header(SSL* ssl) {
 
 #endif
 
+/** Remember to free */
 char* cut_out_http_header(int sockfd) {
 	char buffer, *header = (char* ) malloc(1);
 	ssize_t len = 1;
@@ -147,6 +155,7 @@ char* cut_out_http_header(int sockfd) {
 
 #define solve_protocol(url) __solve_proto(url, GET_AFTER_PROTOCOL(url))
 
+/** Remember to free */
 char* __solve_protocol(const char* url, const char* after_protocol) {
 	char *protocol = NULL;
 	if (after_protocol) {
@@ -164,6 +173,7 @@ char* __solve_protocol(const char* url, const char* after_protocol) {
 
 #define solve_host_name(url) __solve_host_name(url, GET_AFTER_PROTOCOL(url))
 
+/** Remember to free */
 char* __solve_host_name(const char* url, const char* after_protocol) {
 
 	after_protocol = after_protocol ? after_protocol + 3:url;//去掉前面的协议
@@ -191,6 +201,7 @@ int __solve_port(const char* url, const char* after) {
 	return result;
 }
 
+/** Remember to free */
 char* solve_url(const char* url, char** host, int* port) {
 	const char* after_proto = strstr(url, "://");
 
@@ -213,6 +224,7 @@ char* solve_url(const char* url, char** host, int* port) {
 	return proto;
 }
 
+/** Do not free */
 char* get_request_file_path(const char* url) {
 	char* tmp = (tmp = strstr(url, "://")) ? //has proto
 					strstr(tmp + 3, "/"):
@@ -220,48 +232,66 @@ char* get_request_file_path(const char* url) {
 	return tmp ? tmp : "/";
 }
 
-
+/** Remember to free */
 char* make_request_header(const char* file, const char* domain) {
 	char* result = NULL;
 	asprintf(&result, REQUEST_HEADER, file, domain);
 	return result;
 }
 
-ResponeLine* get_respone_data(const char* header, char* http_version, int* http_respone_code, char* respone_message) {
+/** Remember to free */
+ResponeLine* get_respone_data(const char* header, char* http_version, int* http_respone_code, char* respone_message, ssize_t* result_size) {
+	char* dup = strdup(header), *token = strtok(dup, "\r\n");
 
-	static const char TOKEN[] = "\r\n";
+	ssize_t m_result_size = 0;
+	ResponeLine* result = (ResponeLine* ) malloc(sizeof(ResponeLine));
 
-	char* dup = strdup(header);
-	char* token = strtok(dup, TOKEN);
 	sscanf(token, "HTTP/%s %d %s", http_version, http_respone_code, respone_message);
-	while ((token = strtok(NULL, TOKEN)) != NULL) {
-		char *key = (char* )malloc(1), *value = (char*) malloc(1), *proccessing = key;
-		bool skip = false;
-		for (ssize_t i = 0, proccessingIndex = 0; i <= strlen(token)/*这里加 = 是为了把最后一个 \0 算进去*/; ++i) {
+
+	while ((token = strtok(NULL, "\r\n")) != NULL) {
+		char *key = NULL, *value = NULL, *proccessing = (char* ) malloc(1);
+		bool skip = false, keyFinished = false;
+		ssize_t proccessingIndex, i;
+		for (i = proccessingIndex = 0; i <= strlen(token)/*这里加 = 是为了把最后一个 \0 算进去*/; ++i) {
 			if (skip) {
-				skip = false;
-				continue;
+				skip = false;continue;
 			}
-			if (token[i] == ':') {
-				skip = true;//下一个是一个空格
-				proccessing = value;
+			if (!keyFinished && token[i] == ':') {
+				skip =/*下一个是一个空格*/keyFinished = true;
+				proccessing[proccessingIndex] = '\0';
+				key = proccessing; //key finished
+				/** reset proccessing */
+				proccessing = (char* ) malloc(1); 
 				proccessingIndex = 0;
 			} else {
 				proccessing[proccessingIndex] = token[i];
-				proccessing = (char* ) realloc(key, ++proccessingIndex);
+				proccessing = (char* ) realloc(proccessing, ++proccessingIndex + 1);
 			}
 		}
+		proccessing[proccessingIndex] = '\0';
+		value = proccessing;
+		/** add into result and realloc result */
+		(result + m_result_size)->key = key;
+		(result + m_result_size)->value = value;
+		result = (ResponeLine*) realloc(result, (++m_result_size + 1) * sizeof(ResponeLine));
 	}
-
+	if (result_size != NULL) *result_size = m_result_size;
 	free(dup);
+	return result;
+}
+
+void free_ResponeLine(ResponeLine* ptr, ssize_t size) {
+	for (register ssize_t i = 0; i < size; ++i) {
+		free(ptr[i].key);free(ptr[i].value);
+	}
+	free(ptr);
 }
 
 int main(int argc, char *argv[])
 {
-
 	int port;
 	struct timeval timeout = {5, 10};
-	char* host, * pro = solve_url(argv[1], &host, &port),
+	char *host, *pro = solve_url(argv[1], &host, &port),
 		*request_file = get_request_file_path(argv[1]);
 
 	printf("host: %s, port: %d, pro: %s, file:%s\n", host, port, pro, request_file);
@@ -276,21 +306,23 @@ int main(int argc, char *argv[])
 	char http_version[10], respone_message[20];
 	int code;
 
+	ssize_t responeLine_size;
+
 	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(struct timeval));
 #ifdef ENABLE_HTTPS
 	if (STR_EQUALS(pro, "https")) {
 		INIT_SSL();
-	
 		SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
+		REQUIRE_SSL_RESULT_NOT_NULL(ctx, "SSL_CTX_new failed.");
+
 		SSL* ssl = create_https_connect(ctx, fd);
-	
 		SSL_write(ssl, request_header, strlen(request_header));
-	
 		printf("recvicing\n");
 		char *header = cut_out_https_header(ssl);
 		printf("header: %s\n, others\n", header);
 		
-		get_respone_data(header, http_version, &code, respone_message);
+		ResponeLine* lines = get_respone_data(header, http_version, &code, respone_message, &responeLine_size);
+		free_ResponeLine(lines, responeLine_size);
 
 		ssize_t size = 0;
 		while ((size = SSL_read(ssl, buffer, sizeof(buffer))) > 0) {
@@ -300,11 +332,22 @@ int main(int argc, char *argv[])
 	
 		close_https_connect(ssl);
 		SSL_CTX_free(ctx);
+		free(header);
+
+		ERR_free_strings();
+		sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
+		EVP_cleanup();
 
 	} else 
 #endif 
 	{
 		send(fd, request_header, strlen(request_header), 0);	
+
+		char *header = cut_out_http_header(fd);
+		ResponeLine* lines = get_respone_data(header, http_version, &code, respone_message, &responeLine_size);
+		free_ResponeLine(lines, responeLine_size);
+		free(header);
+
 		printf("recvicing\n");
 		ssize_t size  = 0;
 		while ((size = recv(fd, buffer, sizeof(buffer), 0)) > 0) {
@@ -315,5 +358,8 @@ int main(int argc, char *argv[])
 
 	printf("http_version: %s, code: %d, respone_message: %s\n", http_version, code, respone_message);
 	close(fd);
+
+	free(host); free(pro); free(request_header);
+
 	return 0;
 }
