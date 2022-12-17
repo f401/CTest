@@ -89,9 +89,9 @@ char* host_name_to_ip(const char* host_name) {
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#define REQUIRE_SSL_RESULT_NOT_NULL(field, msg) __REQUIRE_SSL_RESULT_NOT_NULL(field, msg, == NULL)
+#define REQUIRE_SSL_PTR_NOT_NULL(field, msg) __REQUIRE_SSL_RESULT(field, msg, == NULL)
 
-#define __REQUIRE_SSL_RESULT_NOT_NULL(field, msg, whatIsTrue) {\
+#define __REQUIRE_SSL_RESULT(field, msg, whatIsTrue) {\
 if ((field) whatIsTrue) PRINTF_ERROR(msg"\nReason: %s", ERR_reason_error_string(ERR_get_error()));\
 }
 
@@ -109,14 +109,14 @@ SSL_load_error_strings();\
 
 SSL* create_https_connect(SSL_CTX* ctx, int fd) {
 	SSL* ssl = SSL_new(ctx);
-	REQUIRE_SSL_RESULT_NOT_NULL(ssl, "SSL is NULL.");
-	__REQUIRE_SSL_RESULT_NOT_NULL(SSL_set_fd(ssl, fd), "setfd failed!", == 0 /* NULL */);
-	__REQUIRE_SSL_RESULT_NOT_NULL(SSL_connect(ssl), "HTTPS connect failed\n", != 1);
+	REQUIRE_SSL_PTR_NOT_NULL(ssl, "SSL is NULL.");
+	__REQUIRE_SSL_RESULT(SSL_set_fd(ssl, fd), "setfd failed!", == 0 /* NULL */);
+	__REQUIRE_SSL_RESULT(SSL_connect(ssl), "HTTPS connect failed\n", != 1);
 	return ssl;
 }
 
 #define close_https_connect(ssl) {\
-__REQUIRE_SSL_RESULT_NOT_NULL(SSL_shutdown(ssl), "SSL shutdown failed.", != 1);SSL_free(ssl);\
+SSL_shutdown(ssl);SSL_free(ssl);\
 }
 
 /** Remember to free */
@@ -246,7 +246,7 @@ char* make_request_header(const char* file, const char* domain) {
 }
 
 /** Remember to free */
-ResponeLine* get_respone_data(const char* header, char* http_version, int* http_respone_code, char* respone_message, ssize_t* result_size) {
+ResponeLine* responeLine_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message, ssize_t* result_size) {
 	char* dup = strdup(header), *token = strtok(dup, "\r\n");
 
 	ssize_t m_result_size = 0;
@@ -286,11 +286,44 @@ ResponeLine* get_respone_data(const char* header, char* http_version, int* http_
 	return result;
 }
 
-void free_ResponeLine(ResponeLine* ptr, ssize_t size) {
+void responeLine_free_ResponeLine(ResponeLine* ptr, ssize_t size) {
 	for (register ssize_t i = 0; i < size; ++i) {
 		free(ptr[i].key);free(ptr[i].value);
 	}
 	free(ptr);
+}
+
+void responeLine_add(ResponeLine** ptr, ssize_t* size, const char* key, const char* value) {
+	*ptr = (ResponeLine*) realloc(*ptr, ++(*size) * sizeof(ResponeLine*));
+	((*ptr) + (*size) - 1)->key = strdup(key);
+	((*ptr) + (*size) - 1)->value = strdup(value);
+}
+
+/** Remember to free */
+char* responeLine_to_string(ResponeLine* ptr, ssize_t size) {
+	char* result = (char* ) malloc(1);
+	size_t result_len = 3/* \r\n\0 */, avaible_size = 0;
+	for (register ssize_t i = 0; i < size; ++i) {
+		ssize_t key_size = strlen(ptr[i].key), value_size = strlen(ptr[i].value);
+		ssize_t total_size = value_size + key_size + 4/* `\r\n` and `: ` */ ;
+
+		result_len += total_size;
+		result = (char* ) realloc(result, result_len);
+		
+		memcpy(result + avaible_size, ptr[i].key, key_size);
+		avaible_size += key_size;
+
+		memcpy(result + avaible_size, ": ", 2);
+		avaible_size += 2;
+
+		memcpy(result + avaible_size, ptr[i].value, value_size);
+		avaible_size += value_size;
+
+		memcpy(result + avaible_size, "\r\n", 2);
+		avaible_size += 2;
+	}
+	memcpy(result + avaible_size, "\r\n\0", 3);
+	return result;
 }
 
 #define set_socket_timeout(fd, seconds, ms) \
@@ -324,7 +357,7 @@ int main(int argc, char *argv[])
 	if (STR_EQUALS(pro, "https")) {
 		INIT_SSL();
 		SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
-		REQUIRE_SSL_RESULT_NOT_NULL(ctx, "SSL_CTX_new failed.");
+		REQUIRE_SSL_PTR_NOT_NULL(ctx, "SSL_CTX_new failed.");
 
 		SSL* ssl = create_https_connect(ctx, fd);
 		SSL_write(ssl, request_header, strlen(request_header));
@@ -332,15 +365,20 @@ int main(int argc, char *argv[])
 		char *header = cut_out_https_header(ssl);
 		printf("header: %s\n, others\n", header);
 		
-		ResponeLine* lines = get_respone_data(header, http_version, &code, respone_message, &responeLine_size);
-		free_ResponeLine(lines, responeLine_size);
+		ResponeLine* lines = responeLine_get_respone(header, http_version, &code, respone_message, &responeLine_size);
 
 		ssize_t size = 0;
 		while ((size = SSL_read(ssl, buffer, sizeof(buffer))) > 0) {
 			printf("size: %ld, msg: %s", size, buffer);
 			memset(buffer, 0, sizeof(buffer));
 		}
-	
+
+		responeLine_add(&lines, &responeLine_size, "XDD", "SHD");
+
+		printf("toString: %s\n", responeLine_to_string(lines, responeLine_size));
+
+		responeLine_free_ResponeLine(lines, responeLine_size);
+
 		free(header);
 
 		close_https_connect(ssl);
@@ -354,8 +392,8 @@ int main(int argc, char *argv[])
 		send(fd, request_header, strlen(request_header), 0);	
 
 		char *header = cut_out_http_header(fd);
-		ResponeLine* lines = get_respone_data(header, http_version, &code, respone_message, &responeLine_size);
-		free_ResponeLine(lines, responeLine_size);
+		ResponeLine* lines = responeLine_get_respone(header, http_version, &code, respone_message, &responeLine_size);
+		responeLine_free_ResponeLine(lines, responeLine_size);
 		free(header);
 
 		printf("recvicing\n");
