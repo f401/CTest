@@ -61,6 +61,7 @@ typedef struct _ResponeLine {
 	char* key, *value;
 } ResponeLine;
 
+/** 这个结构体封装了ResponeLine和len, 主要函数为responeLineList开头 */
 typedef struct _ResponeLineList {
 	ResponeLine* data;
 	ssize_t len;
@@ -86,9 +87,8 @@ void responeLine_add(ResponeLine** ptr, ssize_t* size, const char* key, const ch
 char* responeLine_to_string(ResponeLine* ptr, ssize_t size);
 ResponeLine* responeLine_look_up(ResponeLine* lines, ssize_t size, const char* needle, ssize_t* result_size);
 
-ResponeLineList responeLineList_make(ResponeLine* data, ssize_t size);
 void __responeLineList_free(ResponeLineList* source);
-void responeLineList_free(ResponeLineList* source);
+void _responeLineList_free(ResponeLineList* source);
 ResponeLineList responeLineList_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message);
 ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle);
 
@@ -391,7 +391,7 @@ ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle
 	return result;
 }
 
-void responeLineList_free(ResponeLineList* source) {
+void _responeLineList_free(ResponeLineList* source) {
 	responeLine_free(source->data, source->len);
 	source->free = NULL; source->data = NULL; source->len = 0;
 }
@@ -410,7 +410,7 @@ ResponeLineList responeLineList_get_respone(const char* header, char* http_versi
 
 	result.data = responeLine_get_respone(header, http_version, http_respone_code, respone_message, &result_size);
 	result.len = result_size;
-	result.free = &responeLineList_free;
+	result.free = &_responeLineList_free;
 
 	return result;
 }
@@ -433,7 +433,6 @@ int main(int argc, char *argv[])
 
 	char http_version[10], respone_message[20];
 	int code;
-
 	ssize_t responeLine_size;
 
 #ifdef ENABLE_HTTPS
@@ -448,7 +447,7 @@ int main(int argc, char *argv[])
 		char *header = cut_out_https_header(ssl);
 		printf("header: %s\n, others\n", header);
 		
-		ResponeLine* lines = responeLine_get_respone(header, http_version, &code, respone_message, &responeLine_size);
+		ResponeLineList lines = responeLineList_get_respone(header, http_version, &code, respone_message);
 
 		ssize_t size = 0;
 		while ((size = SSL_read(ssl, buffer, sizeof(buffer))) > 0) {
@@ -456,16 +455,16 @@ int main(int argc, char *argv[])
 			memset(buffer, 0, sizeof(buffer));
 		}
 
-		responeLine_add(&lines, &responeLine_size, "XDD", "SHD");
+		responeLineList_add(lines, "XDD", "SHD");
 
-		printf("toString: %s\n", responeLine_to_string(lines, responeLine_size));
+		printf("toString: %s\n", responeLineList_to_string(lines));
 
-		ssize_t result_len;
-		ResponeLine* lookup_result = responeLine_look_up(lines, responeLine_size, "Set-Cookie", &result_len);
+		ResponeLineList lookup_result = responeLineList_look_up(lines,"Set-Cookie");
 
-		printf("len: %ld, value: %s\n", result_len, (lookup_result + 2)->value);
+		printf("len: %ld, value: %s\n", lookup_result.len, (lookup_result.data)->value);
 
-		responeLine_free(lines, responeLine_size);
+		lines.free(&lines);
+		lookup_result.free(&lines);
 
 		free(header);
 
