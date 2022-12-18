@@ -294,7 +294,7 @@ void responeLine_free_ResponeLine(ResponeLine* ptr, ssize_t size) {
 }
 
 void responeLine_add(ResponeLine** ptr, ssize_t* size, const char* key, const char* value) {
-	*ptr = (ResponeLine*) realloc(*ptr, ++(*size) * sizeof(ResponeLine*));
+	*ptr = (ResponeLine*) realloc(*ptr, ++(*size) * sizeof(ResponeLine));
 	((*ptr) + (*size) - 1)->key = strdup(key);
 	((*ptr) + (*size) - 1)->value = strdup(value);
 }
