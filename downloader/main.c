@@ -89,6 +89,8 @@ ResponeLine* responeLine_look_up(ResponeLine* lines, ssize_t size, const char* n
 ResponeLineList responeLineList_make(ResponeLine* data, ssize_t size);
 void __responeLineList_free(ResponeLineList* source);
 void responeLineList_free(ResponeLineList* source);
+ResponeLineList responeLineList_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message);
+ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle);
 
 #define solve_protocol(url) __solve_proto(url, GET_AFTER_PROTOCOL(url))
 #define solve_host_name(url) __solve_host_name(url, GET_AFTER_PROTOCOL(url))
@@ -363,8 +365,6 @@ char* responeLine_to_string(ResponeLine* ptr, ssize_t size) {
 	return result;
 }
 
-
-
 ResponeLine* responeLine_look_up(ResponeLine* lines, ssize_t size, const char* needle, ssize_t* result_size) {
 	ResponeLine* result = NULL;
 	ssize_t m_rz = 0;
@@ -378,6 +378,8 @@ ResponeLine* responeLine_look_up(ResponeLine* lines, ssize_t size, const char* n
 		*result_size = m_rz;
 	return result;
 }
+
+
 
 ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle) {
 	ssize_t result_size;
