@@ -279,7 +279,7 @@ ResponeLine* responeLine_get_respone(const char* header, char* http_version, int
 		/** add into result and realloc result */
 		(result + m_result_size)->key = key;
 		(result + m_result_size)->value = value;
-		result = (ResponeLine*) realloc(result, (++m_result_size + 1) * sizeof(ResponeLine));
+		result = (ResponeLine*) realloc(result, (++m_result_size) * sizeof(ResponeLine));
 	}
 	if (result_size != NULL) *result_size = m_result_size;
 	free(dup);
