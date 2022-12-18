@@ -102,7 +102,8 @@ ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle
 	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&__timeout, sizeof(struct timeval));\
 }
 
-
+#define responeLineList_to_string(list) responeLine_to_string(list.data, list.len)
+#define responeLineList_add(list, key, value) responeLine_add(&(list.data), &(list.len), key, value)
 
 int create_socket_connect(const char* ip, uint16_t port) {
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -400,9 +401,6 @@ void _responeLineList_free(ResponeLineList* source) {
 void __responeLineList_free(ResponeLineList* source) {
 	source->free = NULL; source->data = NULL; source->len = 0;
 }
-
-#define responeLineList_to_string(list) responeLine_to_string(list.data, list.len)
-#define responeLineList_add(list, key, value) responeLine_add(&(list.data), &(list.len), key, value)
 
 ResponeLineList responeLineList_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message) {
 	ssize_t result_size;
