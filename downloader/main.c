@@ -13,16 +13,17 @@
 #include <unistd.h>
 
 #define PRINTF_ERROR(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+#define AUTO_ALLOC(ptr, size) ptr == NULL ? malloc(size) : realloc(ptr, size)
 
 #define STR_EQUALS(first, second) strcmp(first, second) == 0
 
 #define PROTOCOL_HTTP "http"
 #define PROTOCOL_HTTPS "https"
+#define GET_AFTER_PROTOCOL(url) strstr(url, "://")
 
 #define DEFAULT_PROTOCOL PROTOCOL_HTTP
 
 #define HTTP_VERSION "1.1"
-
 #define HTTP_DEFAULT_PORT 80
 #define HTTPS_DEFAULT_PORT 443
 
@@ -59,6 +60,47 @@ const char* REQUEST_HEADER =
 typedef struct _ResponeLine {
 	char* key, *value;
 } ResponeLine;
+
+typedef struct _ResponeLineList {
+	ResponeLine* data;
+	ssize_t len;
+
+	void (*free) (struct _ResponeLineList* list);
+} ResponeLineList;
+
+int   create_socket_connect(const char* ip, uint16_t port);
+char* host_name_to_ip(const char* host_name);
+char* cut_out_http_header(int sockfd);
+
+int   __solve_port(const char* url, const char* after);
+char* __solve_protocol(const char* url, const char* after_protocol);
+char* __solve_host_name(const char* url, const char* after_protocol);
+char* solve_url(const char* url, char** host, int* port);
+
+char* get_request_file_path(const char* url);
+char* make_request_header(const char* file, const char* domain);
+
+ResponeLine* responeLine_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message, ssize_t* result_size);
+void responeLine_free(ResponeLine* ptr, ssize_t size);
+void responeLine_add(ResponeLine** ptr, ssize_t* size, const char* key, const char* value);
+char* responeLine_to_string(ResponeLine* ptr, ssize_t size);
+ResponeLine* responeLine_look_up(ResponeLine* lines, ssize_t size, const char* needle, ssize_t* result_size);
+
+ResponeLineList responeLineList_make(ResponeLine* data, ssize_t size);
+void __responeLineList_free(ResponeLineList* source);
+void responeLineList_free(ResponeLineList* source);
+
+#define solve_protocol(url) __solve_proto(url, GET_AFTER_PROTOCOL(url))
+#define solve_host_name(url) __solve_host_name(url, GET_AFTER_PROTOCOL(url))
+#define solve_port(url) __solve_port(url, GET_AFTER_PROTOCOL(url))
+
+#define set_socket_timeout(fd, seconds, ms) \
+{\
+	struct timeval __timeout = {seconds, ms};\
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&__timeout, sizeof(struct timeval));\
+}
+
+
 
 int create_socket_connect(const char* ip, uint16_t port) {
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -107,7 +149,7 @@ SSL_load_error_strings();\
 	EVP_cleanup();\
 }
 
-SSL* create_https_connect(SSL_CTX* ctx, int fd) {
+SSL* create_ssl_connect(SSL_CTX* ctx, int fd) {
 	SSL* ssl = SSL_new(ctx);
 	REQUIRE_SSL_PTR_NOT_NULL(ssl, "SSL is NULL.");
 	__REQUIRE_SSL_RESULT(SSL_set_fd(ssl, fd), "setfd failed!", == 0 /* NULL */);
@@ -121,7 +163,7 @@ SSL_shutdown(ssl);SSL_free(ssl);\
 
 /** Remember to free */
 char* cut_out_https_header(SSL* ssl) {
-	char buffer, *header = (char* ) malloc(1);
+	char buffer, *header = malloc(1);
 	ssize_t len = 1;
 	int flag = 0;
 	while (SSL_read(ssl, &buffer, 1) > 0) {
@@ -141,7 +183,7 @@ char* cut_out_https_header(SSL* ssl) {
 
 /** Remember to free */
 char* cut_out_http_header(int sockfd) {
-	char buffer, *header = (char* ) malloc(1);
+	char buffer, *header = malloc(1);
 	ssize_t len = 1;
 	bool before_nr = false;
 	while (recv(sockfd, &buffer, 1, 0) > 0) {
@@ -157,9 +199,7 @@ char* cut_out_http_header(int sockfd) {
 	return header;
 }
 
-#define GET_AFTER_PROTOCOL(url) strstr(url, "://")
 
-#define solve_protocol(url) __solve_proto(url, GET_AFTER_PROTOCOL(url))
 
 /** Remember to free */
 char* __solve_protocol(const char* url, const char* after_protocol) {
@@ -177,8 +217,6 @@ char* __solve_protocol(const char* url, const char* after_protocol) {
 	return protocol;
 }
 
-#define solve_host_name(url) __solve_host_name(url, GET_AFTER_PROTOCOL(url))
-
 /** Remember to free */
 char* __solve_host_name(const char* url, const char* after_protocol) {
 
@@ -192,8 +230,6 @@ char* __solve_host_name(const char* url, const char* after_protocol) {
 	}
 	return hostname;
 }
-
-#define solve_port(url) __solve_port(url, GET_AFTER_PROTOCOL(url))
 
 int __solve_port(const char* url, const char* after) {
 	after = (after)//is not null, has proto
@@ -209,7 +245,7 @@ int __solve_port(const char* url, const char* after) {
 
 /** Remember to free */
 char* solve_url(const char* url, char** host, int* port) {
-	const char* after_proto = strstr(url, "://");
+	const char* after_proto = GET_AFTER_PROTOCOL(url);
 
 	char *proto = __solve_protocol(url, after_proto);
 	int m_port = __solve_port(url, after_proto);
@@ -249,44 +285,45 @@ char* make_request_header(const char* file, const char* domain) {
 ResponeLine* responeLine_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message, ssize_t* result_size) {
 	char* dup = strdup(header), *token = strtok(dup, "\r\n");
 
-	ssize_t m_result_size = 0;
+	ssize_t m_result_size = 1;
 	ResponeLine* result = (ResponeLine* ) malloc(sizeof(ResponeLine));
 
 	sscanf(token, "HTTP/%s %d %s", http_version, http_respone_code, respone_message);
 
 	while ((token = strtok(NULL, "\r\n")) != NULL) {
-		char *key = NULL, *value = NULL, *proccessing = (char* ) malloc(1);
+		char *key = NULL, *value = NULL, *proccessing = NULL;
 		bool skip = false, keyFinished = false;
 		ssize_t proccessingIndex, i;
 		for (i = proccessingIndex = 0; i <= strlen(token)/*这里加 = 是为了把最后一个 \0 算进去*/; ++i) {
 			if (skip) {
-				skip = false;continue;
+				skip = false;
+				continue;
 			}
 			if (!keyFinished && token[i] == ':') {
 				skip =/*下一个是一个空格*/keyFinished = true;
 				proccessing[proccessingIndex] = '\0';
 				key = proccessing; //key finished
 				/** reset proccessing */
-				proccessing = (char* ) malloc(1); 
+				proccessing = NULL;
 				proccessingIndex = 0;
 			} else {
-				proccessing[proccessingIndex] = token[i];
-				proccessing = (char* ) realloc(proccessing, ++proccessingIndex + 1);
+				proccessing = (char* ) AUTO_ALLOC(proccessing, ++proccessingIndex + 1);
+				proccessing[proccessingIndex - 1] = token[i];
 			}
 		}
 		proccessing[proccessingIndex] = '\0';
 		value = proccessing;
 		/** add into result and realloc result */
-		(result + m_result_size)->key = key;
-		(result + m_result_size)->value = value;
-		result = (ResponeLine*) realloc(result, (++m_result_size + 1) * sizeof(ResponeLine));
+		(result + m_result_size - 1)->key = key;
+		(result + m_result_size - 1)->value = value;
+		result = (ResponeLine*) realloc(result, (++m_result_size) * sizeof(ResponeLine));
 	}
-	if (result_size != NULL) *result_size = m_result_size;
+	if (result_size != NULL) *result_size = m_result_size - 1;
 	free(dup);
 	return result;
 }
 
-void responeLine_free_ResponeLine(ResponeLine* ptr, ssize_t size) {
+void responeLine_free(ResponeLine* ptr, ssize_t size) {
 	for (register ssize_t i = 0; i < size; ++i) {
 		free(ptr[i].key);free(ptr[i].value);
 	}
@@ -294,21 +331,21 @@ void responeLine_free_ResponeLine(ResponeLine* ptr, ssize_t size) {
 }
 
 void responeLine_add(ResponeLine** ptr, ssize_t* size, const char* key, const char* value) {
-	*ptr = (ResponeLine*) realloc(*ptr, ++(*size) * sizeof(ResponeLine));
+	*ptr = (ResponeLine*) AUTO_ALLOC(*ptr, ++(*size) * sizeof(ResponeLine));
 	((*ptr) + (*size) - 1)->key = strdup(key);
 	((*ptr) + (*size) - 1)->value = strdup(value);
 }
 
 /** Remember to free */
 char* responeLine_to_string(ResponeLine* ptr, ssize_t size) {
-	char* result = (char* ) malloc(1);
+	char* result = NULL;
 	size_t result_len = 3/* \r\n\0 */, avaible_size = 0;
 	for (register ssize_t i = 0; i < size; ++i) {
 		ssize_t key_size = strlen(ptr[i].key), value_size = strlen(ptr[i].value);
 		ssize_t total_size = value_size + key_size + 4/* `\r\n` and `: ` */ ;
 
 		result_len += total_size;
-		result = (char* ) realloc(result, result_len);
+		result = AUTO_ALLOC(result, result_len);
 		
 		memcpy(result + avaible_size, ptr[i].key, key_size);
 		avaible_size += key_size;
@@ -326,10 +363,54 @@ char* responeLine_to_string(ResponeLine* ptr, ssize_t size) {
 	return result;
 }
 
-#define set_socket_timeout(fd, seconds, ms) \
-{\
-	struct timeval __timeout = {seconds, ms};\
-	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&__timeout, sizeof(struct timeval));\
+
+
+ResponeLine* responeLine_look_up(ResponeLine* lines, ssize_t size, const char* needle, ssize_t* result_size) {
+	ResponeLine* result = NULL;
+	ssize_t m_rz = 0;
+	for (ssize_t i = 0; i < size; i++) {
+		if (STR_EQUALS(lines[i].key, needle)) {
+			result = AUTO_ALLOC(result, ++m_rz * sizeof(ResponeLine));
+			result[m_rz - 1] = lines[i];
+		}
+	}
+	if (result_size != NULL)
+		*result_size = m_rz;
+	return result;
+}
+
+ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle) {
+	ssize_t result_size;
+	ResponeLineList result;
+
+	result.data = responeLine_look_up(list.data, list.len, needle, &result_size);
+	result.free = &__responeLineList_free;
+	result.len = result_size;
+	return result;
+}
+
+void responeLineList_free(ResponeLineList* source) {
+	responeLine_free(source->data, source->len);
+	source->free = NULL; source->data = NULL; source->len = 0;
+}
+
+/** 该函数只将指针置零 */
+void __responeLineList_free(ResponeLineList* source) {
+	source->free = NULL; source->data = NULL; source->len = 0;
+}
+
+#define responeLineList_to_string(list) responeLine_to_string(list.data, list.len)
+#define responeLineList_add(list, key, value) responeLine_add(&(list.data), &(list.len), key, value)
+
+ResponeLineList responeLineList_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message) {
+	ssize_t result_size;
+	ResponeLineList result;
+
+	result.data = responeLine_get_respone(header, http_version, http_respone_code, respone_message, &result_size);
+	result.len = result_size;
+	result.free = &responeLineList_free;
+
+	return result;
 }
 
 int main(int argc, char *argv[])
@@ -359,7 +440,7 @@ int main(int argc, char *argv[])
 		SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
 		REQUIRE_SSL_PTR_NOT_NULL(ctx, "SSL_CTX_new failed.");
 
-		SSL* ssl = create_https_connect(ctx, fd);
+		SSL* ssl = create_ssl_connect(ctx, fd);
 		SSL_write(ssl, request_header, strlen(request_header));
 		printf("recvicing\n");
 		char *header = cut_out_https_header(ssl);
@@ -377,7 +458,12 @@ int main(int argc, char *argv[])
 
 		printf("toString: %s\n", responeLine_to_string(lines, responeLine_size));
 
-		responeLine_free_ResponeLine(lines, responeLine_size);
+		ssize_t result_len;
+		ResponeLine* lookup_result = responeLine_look_up(lines, responeLine_size, "Set-Cookie", &result_len);
+
+		printf("len: %ld, value: %s\n", result_len, (lookup_result + 2)->value);
+
+		responeLine_free(lines, responeLine_size);
 
 		free(header);
 
@@ -393,7 +479,7 @@ int main(int argc, char *argv[])
 
 		char *header = cut_out_http_header(fd);
 		ResponeLine* lines = responeLine_get_respone(header, http_version, &code, respone_message, &responeLine_size);
-		responeLine_free_ResponeLine(lines, responeLine_size);
+		responeLine_free(lines, responeLine_size);
 		free(header);
 
 		printf("recvicing\n");
