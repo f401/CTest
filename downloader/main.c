@@ -69,6 +69,12 @@ typedef struct _ResponeLineList {
 	void (*free) (struct _ResponeLineList* list);
 } ResponeLineList;
 
+typedef struct DownloadInfo {
+	int fd;
+	char* saveAs;
+	ssize_t total;
+} DownloadInfo;
+
 int   create_socket_connect(const char* ip, uint16_t port);
 char* host_name_to_ip(const char* host_name);
 char* cut_out_http_header(int sockfd);
@@ -79,7 +85,7 @@ char* __solve_host_name(const char* url, const char* after_protocol);
 char* solve_url(const char* url, char** host, int* port);
 
 char* get_request_file_path(const char* url);
-char* make_request_header(const char* file, const char* domain);
+char* make_request_header(const char* request_file, const char* domain, ResponeLineList* header);
 
 ResponeLine* responeLine_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message, ssize_t* result_size);
 void responeLine_free(ResponeLine* ptr, ssize_t size);
@@ -91,6 +97,7 @@ void __responeLineList_free(ResponeLineList* source);
 void _responeLineList_free(ResponeLineList* source);
 ResponeLineList responeLineList_get_respone(const char* header, char* http_version, int* http_respone_code, char* respone_message);
 ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle);
+bool responeLineList_has(ResponeLineList src, const char* key);
 
 #define solve_protocol(url) __solve_proto(url, GET_AFTER_PROTOCOL(url))
 #define solve_host_name(url) __solve_host_name(url, GET_AFTER_PROTOCOL(url))
@@ -278,10 +285,35 @@ char* get_request_file_path(const char* url) {
 }
 
 /** Remember to free */
-char* make_request_header(const char* file, const char* domain) {
-	char* result = NULL;
-	asprintf(&result, REQUEST_HEADER, file, domain);
+char* make_request_header(const char* request_file, const char* domain, ResponeLineList* header) {
+	char* result = NULL, *accept = "*/*", *user_agent = "Downloader";
+#define HAS_GIVE(name, str) \
+	if (responeLineList_has(*header, str)) { \
+		name = responeLineList_look_up(*header, str).data->value; \
+	}
+	HAS_GIVE(accept, "Accept");
+	HAS_GIVE(user_agent, "User-Agent");
+	if (header != NULL) {
+		asprintf(&result, "GET %s HTTP/"HTTP_VERSION"\r\n"
+				"Accept: %s\r\n"
+				"User-Agent: %s\r\n%s", request_file, accept, user_agent, responeLineList_to_string((*header)));
+	} else {
+		asprintf(&result, "GET %s HTTP/"HTTP_VERSION"\r\n"
+				"Accept: %s\r\n"
+				"User-Agent: %s\r\n", request_file, accept, user_agent);
+
+	}
+#undef HAS_GIVE
 	return result;
+}
+
+bool responeLineList_has(ResponeLineList src, const char* key) {
+	for (ssize_t size = 0; size < src.len; ++size) {
+		if (STR_EQUALS((src.data + size)->key, key)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 /** Remember to free */
@@ -413,6 +445,10 @@ ResponeLineList responeLineList_get_respone(const char* header, char* http_versi
 	return result;
 }
 
+void http_download_thread(void* downloadInfo) {
+	DownloadInfo* info = (DownloadInfo* ) downloadInfo;
+}
+
 int main(int argc, char *argv[])
 {
 	int port;
@@ -452,8 +488,6 @@ int main(int argc, char *argv[])
 			printf("size: %ld, msg: %s", size, buffer);
 			memset(buffer, 0, sizeof(buffer));
 		}
-
-		responeLineList_add(lines, "XDD", "SHD");
 
 		printf("toString: %s\n", responeLineList_to_string(lines));
 
