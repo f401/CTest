@@ -179,9 +179,7 @@ char* cut_out_https_header(SSL* ssl) {
 	while (SSL_read(ssl, &buffer, 1) > 0) {
 		header[len - 1] = buffer;
 		if (buffer == '\n' || buffer == '\r') {
-			if (++flag == 4) {
-				break;
-			}
+			if (++flag == 4) break;
 		} else flag = 0;
 		header = (char* ) realloc(header, ++len);
 	}
@@ -195,14 +193,12 @@ char* cut_out_https_header(SSL* ssl) {
 char* cut_out_http_header(int sockfd) {
 	char buffer, *header = malloc(1);
 	ssize_t len = 1;
-	bool before_nr = false;
+	int flag;
 	while (recv(sockfd, &buffer, 1, 0) > 0) {
 		header[len - 1] = buffer;
-		if (buffer == '\n' && len >= 2 && header[len - 2] == '\r') {
-			if (before_nr) {
-				break;
-			} else before_nr = true;
-		} else before_nr = false;
+		if (buffer == '\n' || buffer == '\r') {
+			if (++flag == 4) break;
+		} else flag = 0;
 		header = (char* ) realloc(header, ++len);
 	}
 	header[len - 1] = 0;
@@ -288,7 +284,7 @@ char* get_request_file_path(const char* url) {
 char* make_request_header(const char* request_file, const char* domain, ResponeLineList* header) {
 	char* result = NULL, *accept = "*/*", *user_agent = "Downloader";
 #define HAS_GIVE(name, str) \
-	if (responeLineList_has(*header, str)) { \
+	if (header != NULL && responeLineList_has(*header, str)) { \
 		name = responeLineList_look_up(*header, str).data->value; \
 	}
 	HAS_GIVE(accept, "Accept");
@@ -300,7 +296,7 @@ char* make_request_header(const char* request_file, const char* domain, ResponeL
 	} else {
 		asprintf(&result, "GET %s HTTP/"HTTP_VERSION"\r\n"
 				"Accept: %s\r\n"
-				"User-Agent: %s\r\n", request_file, accept, user_agent);
+				"User-Agent: %s\r\n\r\n", request_file, accept, user_agent);
 
 	}
 #undef HAS_GIVE
@@ -412,8 +408,6 @@ ResponeLine* responeLine_look_up(ResponeLine* lines, ssize_t size, const char* n
 	return result;
 }
 
-
-
 ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle) {
 	ssize_t result_size;
 	ResponeLineList result;
@@ -421,6 +415,7 @@ ResponeLineList responeLineList_look_up(ResponeLineList list, const char* needle
 	result.data = responeLine_look_up(list.data, list.len, needle, &result_size);
 	result.free = &__responeLineList_free;
 	result.len = result_size;
+
 	return result;
 }
 
@@ -447,6 +442,16 @@ ResponeLineList responeLineList_get_respone(const char* header, char* http_versi
 
 void http_download_thread(void* downloadInfo) {
 	DownloadInfo* info = (DownloadInfo* ) downloadInfo;
+	ssize_t total = info->total == -1 ? INT32_MAX: info->total, downloadedSize = 0, tmp = 0;
+	char buffer[1024];
+	int to = open(info->saveAs, O_RDWR | O_CREAT, 0600);
+	while ((tmp = recv(info->fd, buffer, sizeof(buffer) - 1, 0)) > 0 && downloadedSize <= total) {
+		write(to, buffer, tmp);
+		downloadedSize += tmp;
+		printf("\r%f %", (double)downloadedSize / total);
+		memset(buffer, 0, sizeof(buffer));
+	}
+	close(to);
 }
 
 int main(int argc, char *argv[])
@@ -462,7 +467,7 @@ int main(int argc, char *argv[])
 
 	int fd = create_socket_connect(host_name_to_ip(host), port);
 	set_socket_timeout(fd, 5, 0);
-	char* request_header = make_request_header(request_file, host);
+	char* request_header = make_request_header(request_file, host, NULL);
 	printf("request header: %s\n", request_header);
 
 	char http_version[10], respone_message[20];
@@ -511,16 +516,19 @@ int main(int argc, char *argv[])
 		send(fd, request_header, strlen(request_header), 0);	
 
 		char *header = cut_out_http_header(fd);
-		ResponeLine* lines = responeLine_get_respone(header, http_version, &code, respone_message, &responeLine_size);
-		responeLine_free(lines, responeLine_size);
+		printf("header: %s", header);
+		ResponeLineList lines = responeLineList_get_respone(header, http_version, &code, respone_message);
 		free(header);
 
 		printf("recvicing\n");
-		ssize_t size  = 0;
-		while ((size = recv(fd, buffer, sizeof(buffer), 0)) > 0) {
-			printf("size: %ld, msg: %s", size, buffer);
-			memset(buffer, 0, sizeof(buffer));
-		}
+
+		DownloadInfo info;
+		info.fd = fd;
+		info.saveAs = "/opt/c/CTest/downloader/a";
+		ResponeLineList lr = responeLineList_look_up(lines, "Content-Length");
+		info.total = lr.len == 0 ? -1 : atoi(lr.data->value);
+		http_download_thread(&info);
+		lines.free(&lines);
 	}
 
 	printf("http_version: %s, code: %d, respone_message: %s\n", http_version, code, respone_message);
