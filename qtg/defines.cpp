@@ -49,25 +49,53 @@ std::ostream &operator<<(std::ostream &stream, Block &blk) {
   return stream;
 }
 
+#define DO_MOVE(i, j, dir)                                                     \
+  struct Block &blk = __data[i][j];                                            \
+  entity_list &entities = blk.entities;                                        \
+  if (entities.has(entity_id)) {                                               \
+    struct Vector2i where = blk.pos.dir();                                     \
+    struct Block &target = __data[where.x][where.y];                           \
+                                                                               \
+    bool allowMove = true;                                                     \
+    if (target.on_entity_move_here != NULL) {                                  \
+      allowMove = target.on_entity_move_here(entity_id);                       \
+    }                                                                          \
+                                                                               \
+    if (allowMove) {                                                           \
+      blk.entities.remove(entity_id);                                          \
+      target.entities.add(entity_id);                                          \
+      do_out_area_clean();                                                     \
+    }                                                                          \
+  }
+
 void GameData::moveUpOne(entity_id_t entity_id) {
   for (map_size_t i = 1; i <= __x_len; ++i) {
     for (map_size_t j = 1; j <= __y_len; ++j) {
-      struct Block &blk = __data[i][j];
-      entity_list &entities = blk.entities;
-      if (entities.has(entity_id)) {
-        struct Vector2i up = blk.pos.up();
-        struct Block &target = __data[up.x][up.y];
+      DO_MOVE(i, j, up);
+    }
+  }
+}
 
-        bool allowMove = true;
-        if (target.on_entity_move_here != NULL) {
-          allowMove = target.on_entity_move_here(entity_id);
-        }
+void GameData::moveDownOne(entity_id_t entity_id) {
+  for (map_size_t i = __x_len; i > 0; --i) {
+    for (map_size_t j = __y_len; j > 0; --j) {
+      DO_MOVE(i, j, down);
+    }
+  }
+}
 
-        if (allowMove) {
-          blk.entities.remove(entity_id);
-          target.entities.add(entity_id);
-        }
-      }
+void GameData::moveRightOne(entity_id_t entity_id) {
+  for (map_size_t i = __x_len; i > 0; --i) {
+    for (map_size_t j = 1; j <= __y_len; ++j) {
+      DO_MOVE(i, j, right);
+    }
+  }
+}
+
+void GameData::moveLeftOne(entity_id_t entity_id) {
+  for (map_size_t i = 1; i <= __x_len; ++i) {
+    for (map_size_t j = __y_len; j > 0; --j) {
+      DO_MOVE(i, j, left);
     }
   }
 }

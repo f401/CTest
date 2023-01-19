@@ -64,6 +64,18 @@ struct Vector2i {
   struct Vector2i up() {
     return Vector2i(x, y - 1);
   }
+
+  struct Vector2i down() {
+    return Vector2i(x, y + 1);
+  }
+
+  struct Vector2i right() {
+    return Vector2i(x + 1, y);
+  }
+
+  struct Vector2i left() {
+    return Vector2i(x - 1, y);
+  }
 };
 
 struct Block {
@@ -71,10 +83,9 @@ struct Block {
   entity_list entities;
   //返回true表示允许move到当前block
   bool (*on_entity_move_here)(entity_id_t id);
-
 };
 
-std::ostream &operator<<(std::ostream &stream, Block &blk); 
+std::ostream &operator<<(std::ostream &stream, Block &blk);
 
 class GameData {
 public:
@@ -104,6 +115,9 @@ public:
   map_size_t y_len() const noexcept { return __y_len; }
 
   void moveUpOne(entity_id_t entity_id);
+  void moveDownOne(entity_id_t entity_id);
+  void moveRightOne(entity_id_t entity_id);
+  void moveLeftOne(entity_id_t entity_id);
 
   void print() {
     for (int j = 1; j <= __y_len; ++j) {
