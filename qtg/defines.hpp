@@ -78,6 +78,8 @@ struct Vector2i {
   }
 };
 
+typedef std::vector<struct Vector2i> vector2i_list;
+
 struct Block {
   struct Vector2i pos;
   entity_list entities;
@@ -114,10 +116,15 @@ public:
   map_size_t x_len() const noexcept { return __x_len; }
   map_size_t y_len() const noexcept { return __y_len; }
 
-  void moveUpOne(entity_id_t entity_id);
-  void moveDownOne(entity_id_t entity_id);
-  void moveRightOne(entity_id_t entity_id);
-  void moveLeftOne(entity_id_t entity_id);
+  void move_up(entity_id_t entity_id);
+  void move_down(entity_id_t entity_id);
+  void move_right(entity_id_t entity_id);
+  void move_left(entity_id_t entity_id);
+
+  vector2i_list get_up(entity_id_t entity_id);
+  vector2i_list get_left(entity_id_t entity_id);
+  vector2i_list get_right(entity_id_t entity_id);
+  vector2i_list get_down(entity_id_t entity_id);
 
   void print() {
     for (int j = 1; j <= __y_len; ++j) {

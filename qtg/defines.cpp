@@ -41,14 +41,6 @@ void GameData::do_out_area_clean() {
   }
 }
 
-std::ostream &operator<<(std::ostream &stream, Block &blk) {
-  stream << "Block {"
-         << "x: " << blk.pos.x << ",y :" << blk.pos.y
-         << ", entity_id: " << blk.entities
-         << ", has_func: " << (blk.on_entity_move_here == NULL) << "}";
-  return stream;
-}
-
 #define DO_MOVE(i, j, dir)                                                     \
   struct Block &blk = __data[i][j];                                            \
   entity_list &entities = blk.entities;                                        \
@@ -68,7 +60,7 @@ std::ostream &operator<<(std::ostream &stream, Block &blk) {
     }                                                                          \
   }
 
-void GameData::moveUpOne(entity_id_t entity_id) {
+void GameData::move_up(entity_id_t entity_id) {
   for (map_size_t i = 1; i <= __x_len; ++i) {
     for (map_size_t j = 1; j <= __y_len; ++j) {
       DO_MOVE(i, j, up);
@@ -76,7 +68,7 @@ void GameData::moveUpOne(entity_id_t entity_id) {
   }
 }
 
-void GameData::moveDownOne(entity_id_t entity_id) {
+void GameData::move_down(entity_id_t entity_id) {
   for (map_size_t i = __x_len; i > 0; --i) {
     for (map_size_t j = __y_len; j > 0; --j) {
       DO_MOVE(i, j, down);
@@ -84,7 +76,7 @@ void GameData::moveDownOne(entity_id_t entity_id) {
   }
 }
 
-void GameData::moveRightOne(entity_id_t entity_id) {
+void GameData::move_right(entity_id_t entity_id) {
   for (map_size_t i = __x_len; i > 0; --i) {
     for (map_size_t j = 1; j <= __y_len; ++j) {
       DO_MOVE(i, j, right);
@@ -92,10 +84,66 @@ void GameData::moveRightOne(entity_id_t entity_id) {
   }
 }
 
-void GameData::moveLeftOne(entity_id_t entity_id) {
+void GameData::move_left(entity_id_t entity_id) {
   for (map_size_t i = 1; i <= __x_len; ++i) {
     for (map_size_t j = __y_len; j > 0; --j) {
       DO_MOVE(i, j, left);
     }
   }
+}
+
+vector2i_list GameData::get_up(entity_id_t entity_id) {
+  vector2i_list result = vector2i_list();
+  for (map_size_t i = 1; i <= __x_len; ++i) {
+    for (map_size_t j = 1; j <= __y_len; ++j) {
+      Block &target = __data[i][j];
+      if (target.entities.has(entity_id)) {
+        result.push_back(target.pos);
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+vector2i_list GameData::get_down(entity_id_t entity_id) {
+  vector2i_list result = vector2i_list();
+  for (map_size_t i = 1; i <= __x_len; ++i) {
+    for (map_size_t j = __y_len; j > 0; --j) { // changed
+      Block &target = __data[i][j];
+      if (target.entities.has(entity_id)) {
+        result.push_back(target.pos);
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+vector2i_list GameData::get_left(entity_id_t entity_id) {
+  vector2i_list result = vector2i_list();
+  for (map_size_t i = 1; i <= __y_len; ++i) {   // changed
+    for (map_size_t j = 1; j <= __x_len; ++j) { // changed
+      Block &target = __data[j][i];             // changed
+      if (target.entities.has(entity_id)) {
+        result.push_back(target.pos);
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+vector2i_list GameData::get_right(entity_id_t entity_id) {
+  vector2i_list result = vector2i_list();
+  for (map_size_t i = 1; i <= __y_len; ++i) {
+    for (map_size_t j = __x_len; j > 0; --j) { // changed
+      Block &target = __data[j][i];
+      if (target.entities.has(entity_id)) {
+        result.push_back(target.pos);
+        break;
+      }
+    }
+  }
+  return result;
 }
