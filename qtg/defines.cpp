@@ -23,6 +23,14 @@ GameData::GameData(map_size_t x_len, map_size_t y_len)
   }
 }
 
+GameData::~GameData() {
+  map_size_t x_len = __x_len + 2, y_len = __y_len + 2;
+  for (map_size_t i = 0; i < x_len; ++i) {
+      free(__data[i]);
+  }
+  free(__data);
+}
+
 void GameData::do_out_area_clean() {
   for (map_size_t i = 0; i <= __y_len + 1; ++i) {
     __data[0][i].entities.clear();
@@ -92,7 +100,7 @@ void GameData::move_left(entity_id_t entity_id) {
   }
 }
 
-vector2i_list GameData::get_up(entity_id_t entity_id) {
+vector2i_list GameData::get_up(entity_id_t entity_id) const {
   vector2i_list result = vector2i_list();
   for (map_size_t i = 1; i <= __x_len; ++i) {
     for (map_size_t j = 1; j <= __y_len; ++j) {
@@ -106,7 +114,7 @@ vector2i_list GameData::get_up(entity_id_t entity_id) {
   return result;
 }
 
-vector2i_list GameData::get_down(entity_id_t entity_id) {
+vector2i_list GameData::get_down(entity_id_t entity_id) const {
   vector2i_list result = vector2i_list();
   for (map_size_t i = 1; i <= __x_len; ++i) {
     for (map_size_t j = __y_len; j > 0; --j) { // changed
@@ -120,7 +128,7 @@ vector2i_list GameData::get_down(entity_id_t entity_id) {
   return result;
 }
 
-vector2i_list GameData::get_left(entity_id_t entity_id) {
+vector2i_list GameData::get_left(entity_id_t entity_id) const {
   vector2i_list result = vector2i_list();
   for (map_size_t i = 1; i <= __y_len; ++i) {   // changed
     for (map_size_t j = 1; j <= __x_len; ++j) { // changed
@@ -134,7 +142,7 @@ vector2i_list GameData::get_left(entity_id_t entity_id) {
   return result;
 }
 
-vector2i_list GameData::get_right(entity_id_t entity_id) {
+vector2i_list GameData::get_right(entity_id_t entity_id) const {
   vector2i_list result = vector2i_list();
   for (map_size_t i = 1; i <= __y_len; ++i) {
     for (map_size_t j = __x_len; j > 0; --j) { // changed

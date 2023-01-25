@@ -36,11 +36,11 @@ public:
     }
   }
 
-  bool has(entity_id_t id) {
+  bool has(entity_id_t id) const {
     if (size() == 0)
       return false;
-    return id == *this->end() ||
-           std::find(this->begin(), this->end(), id) != this->end();
+    return id == *this->cend() ||
+           std::find(this->cbegin(), this->cend(), id) != this->cend();
   }
 
   friend std::ostream &operator<<(std::ostream &out, entity_list &src) {
@@ -92,6 +92,7 @@ std::ostream &operator<<(std::ostream &stream, Block &blk);
 class GameData {
 public:
   GameData(map_size_t x_len, map_size_t y_len);
+  ~GameData();
 
   Block &get(const Vector2i &pos) const {
     chk_pos(pos);
@@ -121,12 +122,12 @@ public:
   void move_right(entity_id_t entity_id);
   void move_left(entity_id_t entity_id);
 
-  vector2i_list get_up(entity_id_t entity_id);
-  vector2i_list get_left(entity_id_t entity_id);
-  vector2i_list get_right(entity_id_t entity_id);
-  vector2i_list get_down(entity_id_t entity_id);
+  vector2i_list get_up(entity_id_t entity_id) const;
+  vector2i_list get_left(entity_id_t entity_id) const;
+  vector2i_list get_right(entity_id_t entity_id) const;
+  vector2i_list get_down(entity_id_t entity_id) const;
 
-  void print() {
+  void print() const {
     for (int j = 1; j <= __y_len; ++j) {
       for (int i = 1; i <= __x_len; ++i) {
         std::cout << __data[i][j].entities << " ";
