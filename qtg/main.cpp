@@ -1,5 +1,7 @@
 #include "defines.hpp"
 #include <iostream>
+#include <stdlib.h>
+#include <termios.h>
 
 using namespace std;
 
@@ -8,24 +10,43 @@ using namespace std;
     cout << i->x << ", " << i->y << endl;                                      \
   }
 
+void game(qtg::GameData &&gd) {
+  gd.add_entity(qtg::Vector2i(10, 20), 1);
+  gd.print();
+  for (;;) {
+    char src = getchar();
+    switch (src) {
+    case 'w':
+      gd.move_up(1);
+      break;
+    case 'a':
+      gd.move_left(1);
+      break;
+    case 's':
+      gd.move_down(1);
+      break;
+    case 'd':
+      gd.move_right(1);
+      break;
+    default:
+      return;
+    }
+    gd.print();
+    cout << "\n";
+  }
+}
+
+void set_stdin_no_blocking() {
+  struct termios tios;
+  int id = tcgetattr(0, &tios);
+  if (id == -1)
+    perror("tcgetattr");
+  tios.c_lflag &= ~(ICANON);
+  tcsetattr(0, TCSAFLUSH, &tios);
+}
+
 int main(int argc, char *argv[]) {
-  qtg::GameData gameData(10, 20);
-  gameData.add_entity(qtg::Vector2i(2, 2), 1);
-  gameData.add_entity(qtg::Vector2i(2, 3), 1);
-  gameData.add_entity(qtg::Vector2i(3, 2), 1);
-  gameData.add_entity(qtg::Vector2i(3, 3), 1);
-  gameData.print();
-  cout << endl;
-  qtg::vector2i_list up = gameData.get_up(1);
-  PRINT_LIST(up);
-  qtg::vector2i_list down = gameData.get_down(1);
-  cout << endl;
-  PRINT_LIST(down);
-  qtg::vector2i_list left = gameData.get_left(1);
-  cout << endl;
-  PRINT_LIST(left);
-  qtg::vector2i_list right = gameData.get_right(1);
-  cout << endl;
-  PRINT_LIST(right);
+  set_stdin_no_blocking();
+  game(qtg::GameData(10, 20));
   return 0;
 }
