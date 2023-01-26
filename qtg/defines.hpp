@@ -39,8 +39,7 @@ public:
   bool has(entity_id_t id) const {
     if (size() == 0)
       return false;
-    return id == *this->cend() ||
-           std::find(this->cbegin(), this->cend(), id) != this->cend();
+    return std::count(cbegin(), cend(), id);
   }
 
   friend std::ostream &operator<<(std::ostream &out, entity_list &src) {
