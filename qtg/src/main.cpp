@@ -1,4 +1,5 @@
 #include "defines.hpp"
+#include "linux.h"
 #include <iostream>
 #include <stdlib.h>
 #include <termios.h>
@@ -36,17 +37,8 @@ void game(qtg::GameData &&gd) {
   }
 }
 
-void set_stdin_no_blocking() {
-  struct termios tios;
-  int id = tcgetattr(0, &tios);
-  if (id == -1)
-    perror("tcgetattr");
-  tios.c_lflag &= ~(ICANON);
-  tcsetattr(0, TCSAFLUSH, &tios);
-}
-
 int main(int argc, char *argv[]) {
-  set_stdin_no_blocking();
+  set_stdin_no_buffer();
   game(qtg::GameData(10, 20));
   return 0;
 }
