@@ -8,9 +8,14 @@ namespace qtg {
 
 class Block {
 public:
+  Block(map_size_t x, map_size_t y): pos(x, y) {}
+  Block(Vector2i pos): pos(pos) {}
+  Block(): Block(0, 0) {}
+
   Vector2i pos;
 
-  virtual bool on_entity_move_here() = 0;
+  //return true allow move
+  virtual bool on_entity_move_here() { return true; }
 };
 
 } // namespace qtg
