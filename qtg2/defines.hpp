@@ -8,16 +8,16 @@ namespace qtg {
 
 typedef uint32_t map_size_t;
 
-#define QTG_INLINE inline
+#define QTG_INLINE __attribute__((always_inline)) inline
 
 typedef struct _Vector2i {
   map_size_t x, y;
   _Vector2i(map_size_t _x, map_size_t _y) : x(_x), y(_y) {}
 
-  _Vector2i up() { return _Vector2i(x, y - 1); }
-  _Vector2i down() { return _Vector2i(x, y + 1); }
-  _Vector2i right() { return _Vector2i(x + 1, y); }
-  _Vector2i left() { return _Vector2i(x - 1, y); }
+  _Vector2i up(map_size_t cnt = 1) { return _Vector2i(x, y - cnt); }
+  _Vector2i down(map_size_t cnt = 1) { return _Vector2i(x, y + cnt); }
+  _Vector2i right(map_size_t cnt = 1) { return _Vector2i(x + cnt, y); }
+  _Vector2i left(map_size_t cnt = 1) { return _Vector2i(x - cnt, y); }
 
   bool operator==(const _Vector2i &src) const {
     return src.x == x && src.y == y;
