@@ -93,7 +93,7 @@ void GameData::do_out_area_clean() {
   }
 }
 
-static bool __false(entity_id_t id) { return false; }
+static bool __false(Block &blk, entity_id_t id) { return false; }
 
 void GameData::make_wall_unthrought(const Vector2i &pos) {
   chk_pos(pos);

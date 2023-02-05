@@ -29,3 +29,7 @@ Game::~Game() {
   }
   delete[] __blocks;
 }
+
+void Game::register_entity(Entity &entity, Vector2i initPos) {
+	__entities.add(entity);
+}

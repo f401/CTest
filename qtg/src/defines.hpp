@@ -83,7 +83,7 @@ struct Block {
   struct Vector2i pos;
   entity_list entities;
   // 返回true表示允许move到当前block
-  bool (*on_entity_move_here)(entity_id_t id);
+  bool (*on_entity_move_here)(Block &current, entity_id_t id);
 };
 
 #ifdef DEBUG
