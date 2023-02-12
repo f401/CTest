@@ -24,10 +24,16 @@ real_num_t ddz::getRealByDisplay(StringRef &ref) { return MAP_map.at(ref); }
 CardList ddz::makeFullCardList() {
   CardList result = CardList();
   for (const auto &[key, value] : MAP_map) {
-    result.push_back(Card(Flower::FangKuai, key, value));
-    result.push_back(Card(Flower::HeiTao, key, value));
-    result.push_back(Card(Flower::HongTao, key, value));
-    result.push_back(Card(Flower::MeiHua, key, value));
+    if (key == KING1) {
+      result.push_back(Card(CardAttributes::KING1, key, value));
+    } else if (key == KING2) {
+      result.push_back(Card(CardAttributes::KING2, key, value));
+    } else {
+      result.push_back(Card(CardAttributes::FangKuai, key, value));
+      result.push_back(Card(CardAttributes::HeiTao, key, value));
+      result.push_back(Card(CardAttributes::HongTao, key, value));
+      result.push_back(Card(CardAttributes::MeiHua, key, value));
+    }
   }
   return result;
 }

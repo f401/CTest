@@ -4,36 +4,31 @@
 
 #include "StringRef.hpp"
 #include "defines.hpp"
+#include "CardAttribute.hpp"
 #include <algorithm>
 #include <vector>
 
 namespace ddz {
 
-#define FLOWER_COLOR_BLACK 0
-#define FLOWER_COLOR_RED 1
-
-enum class Flower {
-  HongTao = FLOWER_COLOR_RED,
-  MeiHua = FLOWER_COLOR_BLACK,
-  HeiTao = FLOWER_COLOR_BLACK,
-  FangKuai = FLOWER_COLOR_RED
-};
-
 struct Card {
-  Flower flower;
+  CardAttribute flower;
   StringRef displayNum;
   real_num_t realNum;
 
-  Card(Flower flower, StringRef displayNum, real_num_t realNum)
+  Card(CardAttribute flower, StringRef displayNum, real_num_t realNum)
       : flower(flower), displayNum(displayNum), realNum(realNum) {}
 };
 
 class CardList : public std::vector<struct Card> {
 public:
   void shuffle() {
-    for (int i = 0; i < size(); ++i) {
+    for (size_t i = 0; i < size(); ++i) {
       std::swap(at(i), at(rand() % size()));
     }
+  }
+
+  DDZ_INLINE void sort() {
+	  std::sort(begin(), end(), [](const Card &a, const Card &b) { return a.realNum > b.realNum; }); 
   }
 };
 

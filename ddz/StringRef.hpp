@@ -4,6 +4,7 @@
 
 #include "defines.hpp"
 #include <string>
+#include <cstring>
 
 namespace ddz {
 
@@ -18,6 +19,10 @@ public:
 
   bool operator<(const StringRef &other) const noexcept {
     return src < other.src; // compare memory
+  }
+
+  bool operator==(const StringRef &other) const noexcept {
+	  return other.src == src || strcmp(other.src, src) == 0;
   }
 
 private:
