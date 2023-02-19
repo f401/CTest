@@ -1,0 +1,17 @@
+[
+    {
+        "command": "c++ -c -o CMakeFiles/main.dir/src/CardGroup.cpp.o /opt/c/CTest/ddz/src/CardGroup.cpp",
+        "directory": "/opt/c/CTest/ddz/build",
+        "file": "/opt/c/CTest/ddz/src/CardGroup.cpp"
+    },
+    {
+        "command": "c++ -c -o CMakeFiles/main.dir/src/CardUtil.cpp.o /opt/c/CTest/ddz/src/CardUtil.cpp",
+        "directory": "/opt/c/CTest/ddz/build",
+        "file": "/opt/c/CTest/ddz/src/CardUtil.cpp"
+    },
+    {
+        "command": "c++ -c -o CMakeFiles/main.dir/src/main.cpp.o /opt/c/CTest/ddz/src/main.cpp",
+        "directory": "/opt/c/CTest/ddz/build",
+        "file": "/opt/c/CTest/ddz/src/main.cpp"
+    }
+]

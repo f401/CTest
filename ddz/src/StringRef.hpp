@@ -5,6 +5,7 @@
 #include "defines.hpp"
 #include <string>
 #include <cstring>
+#include <ostream>
 
 namespace ddz {
 
@@ -17,12 +18,17 @@ public:
   DDZ_INLINE char *str() noexcept { return const_cast<char *>(src); }
   DDZ_INLINE std::string cppStr() const noexcept { return std::string(src); }
 
-  bool operator<(const StringRef &other) const noexcept {
+  DDZ_INLINE bool operator<(const StringRef &other) const noexcept {
     return src < other.src; // compare memory
   }
 
-  bool operator==(const StringRef &other) const noexcept {
+  DDZ_INLINE bool operator==(const StringRef &other) const noexcept {
 	  return other.src == src || strcmp(other.src, src) == 0;
+  }
+
+  DDZ_INLINE friend std::ostream& operator<<(std::ostream &src, const StringRef &other) {
+	  src << other.src;
+	  return src;
   }
 
 private:

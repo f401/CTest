@@ -1,4 +1,6 @@
+#include "CardUtil.hpp"
 #include "Card.hpp"
+#include "CardList.hpp"
 #include "StringPool.hpp"
 #include "StringRef.hpp"
 #include <map>
@@ -6,14 +8,14 @@
 
 using namespace ddz::StringPool;
 
-const static ddz::StringRef MAP[] = {THREE, FOUR, FIVE, SIX,   SEVEN,
-                                     EIGHT, NINE, TEN,  J,     Q,
-                                     K,     A,    TWO,  KING1, KING2};
+const static ddz::StringRef MAP[] = {THREE,   FOUR, FIVE,  SIX,  SEVEN, EIGHT,
+                                     NINE,    TEN,  J,     Q,    K,     A,
+                                     nullptr, TWO,  KING1, KING2};
 
 const static std::map<ddz::StringRef, ddz::real_num_t> MAP_map = {
     {THREE, 0}, {FOUR, 1}, {FIVE, 2}, {SIX, 3},    {SEVEN, 4},
     {EIGHT, 5}, {NINE, 6}, {TEN, 7},  {J, 8},      {Q, 9},
-    {K, 10},    {A, 11},   {TWO, 12}, {KING1, 13}, {KING2, 14}};
+    {K, 10},    {A, 11},   {TWO, 13}, {KING1, 14}, {KING2, 15}};
 
 using namespace ddz;
 
@@ -36,4 +38,13 @@ CardList ddz::makeFullCardList() {
     }
   }
   return result;
+}
+
+PlayerList &ddz::sendCardToEachPlayer(PlayerList &list, CardList cards ,bool shuffle) {
+  if (shuffle)
+    cards.shuffle();
+  for (size_t i = 0, players = list.size(); i < cards.size(); ++i) {
+    list[i % players].cards().push_back(cards[i]);
+  }
+  return list;
 }
