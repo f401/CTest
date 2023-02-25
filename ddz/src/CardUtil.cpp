@@ -1,6 +1,5 @@
 #include "CardUtil.hpp"
 #include "Card.hpp"
-#include "CardList.hpp"
 #include "StringPool.hpp"
 #include "StringRef.hpp"
 #include <map>

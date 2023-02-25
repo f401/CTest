@@ -2,7 +2,7 @@
 #define __DDZ_CARDTYPE_HPP__
 
 #include "Card.hpp"
-#include "CardList.hpp"
+#include "Collections.hpp"
 
 namespace ddz {
 

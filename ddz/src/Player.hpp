@@ -1,7 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "CardList.hpp"
+#include "Collections.hpp"
 #include <vector>
 
 namespace ddz {
@@ -18,8 +18,6 @@ public:
   DDZ_INLINE CardList &cards() { return haveCards; }
   DDZ_INLINE bool operator==(const Player &other) { return id == other.id; }
 };
-
-typedef std::vector<Player> PlayerList;
 } // namespace ddz
 
 #endif /* PLAYER_H */

@@ -2,6 +2,7 @@
 #define CARDGROUP_H
 
 #include "CardType.hpp"
+#include "Collections.hpp"
 
 namespace ddz {
 

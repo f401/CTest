@@ -2,8 +2,8 @@
 #define __DDZ_CARD_UTILS_HPP__
 
 #include "StringRef.hpp"
-#include "CardList.hpp"
 #include "Player.hpp"
+#include "Collections.hpp"
 
 namespace ddz {
 extern inline StringRef getDisplayByReal(real_num_t src) __attribute__((always_inline, const));
