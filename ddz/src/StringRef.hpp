@@ -3,19 +3,18 @@
 #define __DDZ_STRING_REF_HPP__
 
 #include "defines.hpp"
-#include <string>
 #include <cstring>
 #include <ostream>
+#include <string>
 
 namespace ddz {
 
 class StringRef {
 public:
-  DDZ_INLINE StringRef(const char *src) : src(src) {}
-  DDZ_INLINE StringRef(std::string src) : src(src.c_str()) {}
-  DDZ_INLINE StringRef() : src("") {}
+  DDZ_INLINE StringRef(const char *src) noexcept : src(src) {}
+  DDZ_INLINE StringRef(std::string src) noexcept : src(src.c_str()) {}
+  DDZ_INLINE StringRef() noexcept : src("") {}
   DDZ_INLINE const char *str() const noexcept { return src; };
-  DDZ_INLINE char *str() noexcept { return const_cast<char *>(src); }
   DDZ_INLINE std::string cppStr() const noexcept { return std::string(src); }
 
   DDZ_INLINE bool operator<(const StringRef &other) const noexcept {
@@ -23,12 +22,13 @@ public:
   }
 
   DDZ_INLINE bool operator==(const StringRef &other) const noexcept {
-	  return other.src == src || strcmp(other.src, src) == 0;
+    return other.src == src || strcmp(other.src, src) == 0;
   }
 
-  DDZ_INLINE friend std::ostream& operator<<(std::ostream &src, const StringRef &other) {
-	  src << other.src;
-	  return src;
+  DDZ_INLINE friend std::ostream &operator<<(std::ostream &src,
+                                             const StringRef &other) {
+    src << other.src;
+    return src;
   }
 
 private:

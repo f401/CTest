@@ -16,7 +16,7 @@ public:
   Player() : haveCards() {}
 
   DDZ_INLINE CardList &cards() { return haveCards; }
-  DDZ_INLINE bool operator==(const Player &other) { return id == other.id; }
+  DDZ_INLINE bool operator==(const Player &other) noexcept { return id == other.id; }
 };
 } // namespace ddz
 

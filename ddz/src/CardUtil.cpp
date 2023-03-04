@@ -39,11 +39,18 @@ CardList ddz::makeFullCardList() {
   return result;
 }
 
-PlayerList &ddz::sendCardToEachPlayer(PlayerList &list, CardList cards ,bool shuffle) {
-  if (shuffle)
-    cards.shuffle();
+PlayerList &ddz::sendCardToEachPlayer(PlayerList &list,
+                                      const CardList &cards) noexcept {
   for (size_t i = 0, players = list.size(); i < cards.size(); ++i) {
     list[i % players].cards().push_back(cards[i]);
+  }
+  return list;
+}
+
+PlayerList &ddz::sendCardToEachPlayer(PlayerList &list,
+                                      CardList &&cards) noexcept {
+  for (size_t players = list.size(), i = 0; i < cards.size(); ++i) {
+    list[i % players].cards().push_back(std::move(cards[i]));
   }
   return list;
 }

@@ -11,26 +11,21 @@ namespace ddz {
 
 class Player;
 
-template <class T>
-class CommonCollections : public std::vector<T> {
+template <class T> class CommonCollections : public std::vector<T> {
 public:
   using std::vector<T>::vector;
+  using typename std::vector<T>::const_iterator;
+  using typename std::vector<T>::iterator;
 
-  void shuffle() {
+  void shuffle() noexcept {
     for (size_t i = 0; i < this->size(); ++i) {
       std::swap(this->at(i), this->at(rand() % this->size()));
     }
   }
 
-  DDZ_INLINE void sort() {
-    std::sort(this->begin(), this->end(), [](const T &a, const T &b) {
-      return a.realNum > b.realNum;
-    });
-  }
-
-  DDZ_INLINE void moveTo(CommonCollections& other, size_t start, size_t count) {
-    while(count--)
-    	other.push_back(this->at(start + count));
+  DDZ_INLINE void sort() noexcept {
+    std::sort(this->begin(), this->end(),
+              [](const T &a, const T &b) { return a.realNum > b.realNum; });
   }
 };
 

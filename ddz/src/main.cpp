@@ -30,7 +30,8 @@ void testCardType() {
 void testSendCard() {
   using namespace ddz;
   PlayerList list = {Player(), Player(), Player()};
-  sendCardToEachPlayer(list, makeFullCardList());
+  CardList fullCard = makeFullCardList();
+  sendCardToEachPlayer(list, std::move(fullCard));
   using namespace std;
   for (auto i = list.begin(); i != list.end(); ++i) {
     cout << "Player:" << endl;
@@ -42,4 +43,7 @@ void testSendCard() {
   }
 }
 
-int main(int argc, char *argv[]) { return 0; }
+int main(int argc, char *argv[]) {
+	testSendCard();
+	return 0; 
+}

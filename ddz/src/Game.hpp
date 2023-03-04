@@ -25,10 +25,11 @@ public:
   virtual CardList makeFullCardList() { return ddz::makeFullCardList(); }
 
   virtual void sendCardToEachPlayer(CardList &cards) {
-    ddz::sendCardToEachPlayer(players, cards);
+    cards.shuffle();
+    ddz::sendCardToEachPlayer<true>(players, cards);
   }
 
-  virtual void selectLandOwner() {}
+  virtual void selectLandOwner() { players.shuffle(); }
 
   DDZ_INLINE void sendCardToLandOwner() {
     diPai.moveTo(players[0].cards(), 0, 3);
