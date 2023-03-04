@@ -1,4 +1,7 @@
 #include "CardGroup.hpp"
+#include "CardRealNumPool.hpp"
+#include "CardUtil.hpp"
+#include "StringPool.hpp"
 #include <cstdio>
 #include <map>
 
@@ -17,7 +20,8 @@ CardGroup CardGroup::whatType(CardList list) {
   auto countmap = cacCount(list);
   CardGroup result;
   result.list = list;
-
+  
+  // 统计最多卡以及最少卡
   size_t n = list.size();
   std::pair<const Card *, size_t> maxCnt, minCnt;
   for (const Card &card : list) {
@@ -44,6 +48,11 @@ CardGroup CardGroup::whatType(CardList list) {
       n == 2 && maxCnt.second == 2,
       CardType(CARD_WEIGHT_USUAL, CARD_TYPE_DuiZi, list.at(0))); // 对子
   NEW_CARDTYPE(
+      n == 2 && maxCnt.second == 1 && minCnt.second == 1 &&
+          list.at(0).realNum == REAL_NUM_KING1 &&
+          list.at(1).realNum == REAL_NUM_KING2,
+      CardType(CARD_WEIGHT_KING_BOOM, CARD_TYPE_WangZha, list.at(0))); // 王炸
+  NEW_CARDTYPE(
       n == 3 && maxCnt.second == 3,
       CardType(CARD_WEIGHT_USUAL, CARD_TYPE_Three, list.at(0))); // 三张
   NEW_CARDTYPE(n == 4 && maxCnt.second == 3,
@@ -64,9 +73,10 @@ CardGroup CardGroup::whatType(CardList list) {
       n >= 5 && maxCnt.second == 1 &&
           list[0].realNum + n - 1 == list.end()->realNum,
       CardType(CARD_WEIGHT_USUAL, CARD_TYPE_ShunZi, *list.end())); // 顺子
-  NEW_CARDTYPE(n >= 6 && maxCnt.second == 2 && minCnt.second == 2 &&
-                   list[0].realNum == list[n - 1].realNum + n / 2 - 1,
-               CardType(CARD_WEIGHT_USUAL, CARD_TYPE_LianDui, *list.end()));//连对
+  NEW_CARDTYPE(
+      n >= 6 && maxCnt.second == 2 && minCnt.second == 2 &&
+          list[0].realNum == list[n - 1].realNum + n / 2 - 1,
+      CardType(CARD_WEIGHT_USUAL, CARD_TYPE_LianDui, *list.end())); // 连对
 
   size_t cntCount = 1;
   {

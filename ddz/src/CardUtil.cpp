@@ -1,7 +1,9 @@
 #include "CardUtil.hpp"
 #include "Card.hpp"
+#include "CardRealNumPool.hpp"
 #include "StringPool.hpp"
 #include "StringRef.hpp"
+#include <iostream>
 #include <map>
 #include <stdlib.h>
 
@@ -12,15 +14,19 @@ const static ddz::StringRef MAP[] = {THREE,   FOUR, FIVE,  SIX,  SEVEN, EIGHT,
                                      nullptr, TWO,  KING1, KING2};
 
 const static std::map<ddz::StringRef, ddz::real_num_t> MAP_map = {
-    {THREE, 0}, {FOUR, 1}, {FIVE, 2}, {SIX, 3},    {SEVEN, 4},
-    {EIGHT, 5}, {NINE, 6}, {TEN, 7},  {J, 8},      {Q, 9},
-    {K, 10},    {A, 11},   {TWO, 13}, {KING1, 14}, {KING2, 15}};
+    {THREE, REAL_NUM_THREE}, {FOUR, REAL_NUM_FOUR},   {FIVE, REAL_NUM_FIVE},
+    {SIX, REAL_NUM_SIX},     {SEVEN, REAL_NUM_SEVEN}, {EIGHT, REAL_NUM_EIGHT},
+    {NINE, REAL_NUM_NINE},   {TEN, REAL_NUM_TEN},     {J, REAL_NUM_J},
+    {Q, REAL_NUM_Q},         {K, REAL_NUM_K},         {A, REAL_NUM_A},
+    {TWO, REAL_NUM_TWO},     {KING1, REAL_NUM_KING1}, {KING2, REAL_NUM_KING2}};
 
 using namespace ddz;
 
 StringRef ddz::getDisplayByReal(real_num_t src) { return MAP[src]; }
 
-real_num_t ddz::getRealByDisplay(StringRef &ref) { return MAP_map.at(ref); }
+real_num_t ddz::getRealByDisplay(const StringRef &ref) {
+  return MAP_map.at(ref);
+}
 
 CardList ddz::makeFullCardList() {
   CardList result = CardList();
@@ -49,8 +55,21 @@ PlayerList &ddz::sendCardToEachPlayer(PlayerList &list,
 
 PlayerList &ddz::sendCardToEachPlayer(PlayerList &list,
                                       CardList &&cards) noexcept {
+#ifdef DDZ_SEND_CARDS_USE_RANGE
+  if (cards.size() % list.size() != 0) {
+    std::cerr << "玩家数量与牌数无法达到平均" << std::endl;
+    ;
+  }
+  size_t aPlayerCardCount = cards.size() / list.size();
+  for (auto i = list.begin(); i != list.end(); ++i) {
+    cards.moveTo(i->cards(), 0, aPlayerCardCount);
+  }
+#else
   for (size_t players = list.size(), i = 0; i < cards.size(); ++i) {
     list[i % players].cards().push_back(std::move(cards[i]));
+    std::cout << i << std::endl;
   }
+  cards.clear();
+#endif
   return list;
 }

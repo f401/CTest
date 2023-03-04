@@ -21,6 +21,7 @@ namespace ddz {
 #define CARD_TYPE_ShunZi 8
 #define CARD_TYPE_LianDui 9
 #define CARD_TYPE_FeiJi 10
+#define CARD_TYPE_WangZha 11
 
 typedef int weight_t;
 typedef int card_type_t;
@@ -32,28 +33,26 @@ protected:
   Card insteadOf;
 
 public:
-  CardType(weight_t weight, card_type_t type, Card min) : weight(weight), type(type), insteadOf(min) {}
+  CardType(weight_t weight, card_type_t type, Card min)
+      : weight(weight), type(type), insteadOf(min) {}
   virtual ~CardType() {}
 
-  virtual bool operator>(const CardType &other) const {
+  virtual bool operator>(const CardType &other) const noexcept {
     if (weight > other.weight)
       return true;
     else if (weight == other.weight && type == other.type)
       return insteadOf > other.insteadOf;
     return false;
   }
-  virtual bool operator<(const CardType &other) const {
+  virtual bool operator<(const CardType &other) const noexcept {
     if (weight < other.weight)
       return true;
     else if (weight == other.weight && type == other.type)
       return insteadOf < other.insteadOf;
     return false;
   }
-  virtual CardType* copy() const { return new CardType(*this); } 
+  virtual CardType *copy() const { return new CardType(*this); }
 };
-
-/* delete is necessary */
-CardType *getCardType(const CardList &list);
 
 } // namespace ddz
 

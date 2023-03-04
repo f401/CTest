@@ -13,5 +13,7 @@ typedef StringRef display_str_t;
 
 #define DDZ_STRINGPOOL_USE_INLINE
 
+#define DDZ_SEND_CARDS_USE_RANGE
+
 }
 #endif /* end of include guard: __DDZ_DEFINES_H__ */
