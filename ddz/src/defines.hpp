@@ -19,7 +19,5 @@ typedef StringRef display_str_t;
 
 #define DDZ_SEND_CARDS_USE_RANGE
 
-#define DDZ_USE_GLIBC_GET_TID
-
 }
 #endif /* end of include guard: __DDZ_DEFINES_H__ */
