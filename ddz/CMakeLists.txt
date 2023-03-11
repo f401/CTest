@@ -34,6 +34,4 @@ endif()
 
 check_function_exists(strdup HAVE_STRDUP)
 
-list(INSERT SRCS 0 "${PLAT_SRCS}")
-
-add_executable(main "${SRCS}")
+add_executable(main ${SRCS} ${PLAT_SRCS})

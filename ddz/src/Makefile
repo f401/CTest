@@ -1,21 +1,22 @@
 CXX:=g++
-CXX_FLAGS:=$(CXX_FLAGS) -g -O2
-LD_FLAGS:=$(LD_FLAGS)
-RM:=rm -rf
-MKDIR:=mkdir -p
+CXX_FlAGS:=-g -O2
+LD_FLAGS:=
+RM:= rm -f
 
-srcs:=$(wildcard *.cpp)
-objects:=$(patsubst %.cpp, %.o, $(srcs))
+srcs := $(wildcard *.cpp platform/unix/*.cpp)
+objects := $(patsubst %.cpp, %.o, $(srcs))
 
 all: main clean
 
-main: $(objects)
-	$(CXX) $(LD_FLAGS) -o main $(objects)
+objects:
+	mkdir -p objects
 
-%.o: %.cpp
-	$(CXX) -c -o $@ $< $(CXX_FLAGS)
+main: $(objects) 	
+	$(CXX) $(LD_FlAGS) -o $@ objects/*
+	@mv main ..
 
-clean:
-	$(RM) *.o
+%.o: %.cpp objects
+	$(CXX) $(CXX_FlAGS) -o objects/$(notdir $@) -c $<
 
-.PHONY: all 
+clean: 
+	$(RM) -r objects
