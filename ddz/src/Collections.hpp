@@ -16,10 +16,12 @@ public:
   using std::vector<T>::vector;
   using typename std::vector<T>::const_iterator;
   using typename std::vector<T>::iterator;
+  using std::vector<T>::size;
+  using std::vector<T>::at;
 
   void shuffle() noexcept {
     for (size_t i = 0; i < this->size(); ++i) {
-      std::swap(this->at(i), this->at(rand() % this->size()));
+      std::swap(at(i), at(rand() % size()));
     }
   }
 
@@ -28,13 +30,15 @@ public:
               [](const T &a, const T &b) { return a.realNum > b.realNum; });
   }
 
+  DDZ_INLINE bool isEmpty() const noexcept { return size() == 0; }
+
   void moveTo(CommonCollections &other, size_t start, size_t count) {
-    auto thisBegin = this->begin() + start,
-         thisEnd = thisBegin + count;
+    auto thisBegin = this->begin() + start, thisEnd = thisBegin + count;
     if constexpr (std::is_move_constructible_v<T>) {
-	    other.insert(other.end(), std::make_move_iterator(thisBegin), std::make_move_iterator(thisEnd));
+      other.insert(other.end(), std::make_move_iterator(thisBegin),
+                   std::make_move_iterator(thisEnd));
     } else {
-	    other.insert(other.end(), thisBegin, thisEnd);
+      other.insert(other.end(), thisBegin, thisEnd);
     }
     this->erase(thisBegin, thisEnd);
   }

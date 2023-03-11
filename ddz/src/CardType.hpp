@@ -23,9 +23,6 @@ namespace ddz {
 #define CARD_TYPE_FeiJi 10
 #define CARD_TYPE_WangZha 11
 
-typedef int weight_t;
-typedef int card_type_t;
-
 class CardType {
 protected:
   weight_t weight;

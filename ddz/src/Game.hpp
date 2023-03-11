@@ -26,7 +26,7 @@ public:
 
   virtual void sendCardToEachPlayer(CardList &cards) {
     cards.shuffle();
-    ddz::sendCardToEachPlayer<true>(players, cards);
+    ddz::sendCardToEachPlayer(players, cards);
   }
 
   virtual void selectLandOwner() { players.shuffle(); }

@@ -20,6 +20,10 @@ CardGroup CardGroup::whatType(CardList list) {
   auto countmap = cacCount(list);
   CardGroup result;
   result.list = list;
+
+  if (list.isEmpty()) { 
+  	return result;
+  }
   
   // 统计最多卡以及最少卡
   size_t n = list.size();

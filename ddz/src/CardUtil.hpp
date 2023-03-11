@@ -6,8 +6,8 @@
 #include "StringRef.hpp"
 
 namespace ddz {
-StringRef getDisplayByReal(real_num_t src) __attribute__((const, always_inline));
-real_num_t getRealByDisplay(const StringRef &ref) __attribute__((const, always_inline));
+StringRef getDisplayByReal(real_num_t src) __attribute__((const));
+real_num_t getRealByDisplay(const StringRef &ref) __attribute__((const));
 
 CardList makeFullCardList();
 PlayerList &sendCardToEachPlayer(PlayerList &list, CardList &&cards) noexcept;
