@@ -1,9 +1,8 @@
 #ifndef __DDZ_LOG_HPP__
 #define __DDZ_LOG_HPP__
 
-#error "Haven't finished"
-
 #include "StringRef.hpp"
+#include "platform/SysFuncs.hpp"
 
 namespace ddz::log {
 
@@ -17,7 +16,7 @@ public:
 	const LogBuffer& buffer;
 	Logger(const LogBuffer &buffer): buffer(buffer) {}
 
-	void info(const ::ddz::StringRef& ref) {}
+	void info(const ::ddz::StringRef& ref);
 };
 
 };
