@@ -1,7 +1,8 @@
 #include "CardGroup.hpp"
-#include "CardRealNumPool.hpp"
 #include "CardUtil.hpp"
-#include "StringPool.hpp"
+#include "Collections.hpp"
+#include "pools/CardRealNumPool.hpp"
+#include "pools/StringPool.hpp"
 #include <cstdio>
 #include <map>
 
@@ -21,10 +22,10 @@ CardGroup CardGroup::whatType(CardList list) {
   CardGroup result;
   result.list = list;
 
-  if (list.isEmpty()) { 
-  	return result;
+  if (list.isEmpty()) {
+    return result;
   }
-  
+
   // 统计最多卡以及最少卡
   size_t n = list.size();
   std::pair<const Card *, size_t> maxCnt, minCnt;

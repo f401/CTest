@@ -2,13 +2,9 @@
 
 #define __DDZ_STRING_POOL_HPP__
 
-#include "defines.hpp"
-
 namespace ddz::StringPool {
-#ifdef DDZ_STRINGPOOL_USE_INLINE
-#define DE_VAR inline constexpr 
-#else
-#define DE_VAR
+#ifndef DE_VAR
+#  define DE_VAR inline constexpr 
 #endif
 DE_VAR const char* THREE = "3";
 DE_VAR const char* FOUR = "4";

@@ -29,7 +29,7 @@ public:
   }
 
   DDZ_INLINE bool is_top_player(Player &other) { return *owner == other; }
-  DDZ_INLINE bool push(Player *owner, CardGroup *newer) {
+  bool push(Player *owner, CardGroup *newer) {
     if (*top < *newer) {
       if (top != nullptr) {
         delete top;

@@ -30,8 +30,9 @@ protected:
   Card insteadOf;
 
 public:
-  CardType(weight_t weight, card_type_t type, Card min)
+  DDZ_INLINE_CONSTEXPR CardType(weight_t weight, card_type_t type, Card min)
       : weight(weight), type(type), insteadOf(min) {}
+
   virtual ~CardType() {}
 
   virtual bool operator>(const CardType &other) const noexcept {
@@ -48,7 +49,9 @@ public:
       return insteadOf < other.insteadOf;
     return false;
   }
+
   virtual CardType *copy() const { return new CardType(*this); }
+
 };
 
 } // namespace ddz

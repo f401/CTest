@@ -1,7 +1,7 @@
-CXX:=g++
-CXX_FlAGS:=-g -O2
-LD_FLAGS:=
-RM:= rm -f
+export CXX:=g++
+export CXX_FlAGS:=-g -O2 -Wall
+export LD_FLAGS:=
+export RM:= rm -f
 
 srcs := $(wildcard *.cpp platform/unix/*.cpp)
 objects := $(patsubst %.cpp, %.o, $(srcs))

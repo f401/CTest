@@ -6,8 +6,14 @@
 namespace ddz::util {
 
 ::ddz::StringRef getTimeAsString();
-		
 
+::ddz::StringRef concatString(const char *data1, const char *data2,
+                              size_t data1Len, size_t data2Len);
+
+DDZ_INLINE ::ddz::StringRef concatString(const char *data1, const char *data2) {
+  return concatString(data1, data2, ::strlen(data1), ::strlen(data2));
 }
+
+} // namespace ddz::util
 
 #endif /* end of include guard: __DDZ_UTIL_HPP__ */

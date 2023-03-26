@@ -18,6 +18,7 @@ public:
   using typename std::vector<T>::iterator;
   using std::vector<T>::size;
   using std::vector<T>::at;
+  using std::vector<T>::begin;
 
   void shuffle() noexcept {
     for (size_t i = 0; i < this->size(); ++i) {
@@ -30,7 +31,9 @@ public:
               [](const T &a, const T &b) { return a.realNum > b.realNum; });
   }
 
-  DDZ_INLINE bool isEmpty() const noexcept { return size() == 0; }
+  DDZ_NO_DISCARD_INLINE_CONSTEXPR bool isEmpty() const noexcept {
+    return size() == 0;
+  }
 
   void moveTo(CommonCollections &other, size_t start, size_t count) {
     auto thisBegin = this->begin() + start, thisEnd = thisBegin + count;

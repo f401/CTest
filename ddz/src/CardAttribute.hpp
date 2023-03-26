@@ -14,11 +14,17 @@ enum class Color { Red = 0, Black = 1 };
 
 class CardAttribute {
 public:
-  DDZ_INLINE CardAttributes::Color get_color() const { return color; }
-  DDZ_INLINE explicit CardAttribute(CardAttributes::Color color, uint8_t id)
+
+  DDZ_INLINE_CONSTEXPR explicit CardAttribute(CardAttributes::Color color,
+                                              uint8_t id)
       : color(color), id(id) {}
 
-  DDZ_INLINE bool operator==(const CardAttribute &src) const {
+  DDZ_NO_DISCARD_INLINE_CONSTEXPR CardAttributes::Color get_color() const {
+    return color;
+  }
+
+  DDZ_NO_DISCARD_INLINE_CONSTEXPR bool
+  operator==(const CardAttribute &src) const {
     return src.color == color && src.id == id;
   }
 
