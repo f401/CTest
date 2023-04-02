@@ -1,5 +1,5 @@
 export CXX:=g++
-export CXX_FlAGS:=-g -O2 -Wall
+export CXX_FlAGS:=-g -O2 -Wall -std=c++17
 export LD_FLAGS:=
 export RM:= rm -f
 

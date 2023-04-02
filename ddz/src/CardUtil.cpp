@@ -9,9 +9,9 @@
 
 using namespace ddz::StringPool;
 
-const static ddz::StringRef MAP[] = {THREE,   FOUR, FIVE,  SIX,  SEVEN, EIGHT,
-                                     NINE,    TEN,  J,     Q,    K,     A,
-                                     "EMPTY", TWO,  KING1, KING2};
+const static ddz::StringRef MAP[] = {
+    THREE, FOUR, FIVE, SIX, SEVEN,   EIGHT, NINE,  TEN,
+    J,     Q,    K,    A,   "EMPTY", TWO,   KING1, KING2};
 
 const static std::map<ddz::StringRef, ddz::real_num_t> MAP_map = {
     {THREE, REAL_NUM_THREE}, {FOUR, REAL_NUM_FOUR},   {FIVE, REAL_NUM_FIVE},
@@ -22,16 +22,17 @@ const static std::map<ddz::StringRef, ddz::real_num_t> MAP_map = {
 
 using namespace ddz;
 
-StringRef ddz::getDisplayByReal(real_num_t src) { return MAP[src]; }
+StringRef ddz::getDisplayByReal(real_num_t src) noexcept {
+  return MAP[src];
+}
 
-real_num_t ddz::getRealByDisplay(const StringRef &ref) {
+real_num_t ddz::getRealByDisplay(const StringRef &ref) noexcept {
   return MAP_map.at(ref);
 }
 
-
-CardList ddz::makeFullCardList() {
+CardList ddz::makeFullCardList() noexcept {
   CardList result = CardList();
-  for (const auto& [key, value] : MAP_map) {
+  for (const auto &[key, value] : MAP_map) {
     if (value == REAL_NUM_KING1) {
       result.push_back(Card(CardAttributes::KING1, key, value));
     } else if (value == REAL_NUM_KING2) {

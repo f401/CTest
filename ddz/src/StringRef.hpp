@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ostream>
 #include <string>
+#include <string_view>
 
 namespace ddz {
 
@@ -19,14 +20,17 @@ public:
   StringRef() = default;
   StringRef(std::nullptr_t) = delete;
 
-  constexpr StringRef(const char *str) noexcept
+  DDZ_CONSTEXPR StringRef(const char *str) noexcept
       : src(str), len(std::char_traits<char>::length(str)) {}
 
-  constexpr StringRef(const char *str, size_t sz) noexcept
+  DDZ_CONSTEXPR StringRef(const char *str, size_t sz) noexcept
       : src(str), len(sz) {}
 
   StringRef(const std::string &src) noexcept
       : src(src.data()), len(src.size()) {}
+
+  StringRef(const StringRef &) noexcept = default;
+  StringRef(StringRef &&) noexcept = default;
 
   /// 返回所代理的指针
   DDZ_NO_DISCARD DDZ_INLINE const char *data() const noexcept { return src; }
@@ -37,7 +41,8 @@ public:
   }
 
   /// 对于 `compareMem` 的简单封装
-  DDZ_NO_DISCARD constexpr int compare(const StringRef &left) const noexcept {
+  DDZ_NO_DISCARD DDZ_CONSTEXPR int
+  compare(const StringRef &left) const noexcept {
     if (int result = compareMem(left.src, src, std::min(left.len, len))) {
       return result < 0 ? -1 : 1;
     }
@@ -51,22 +56,28 @@ public:
    * operators
    */
 
-  DDZ_NO_DISCARD DDZ_INLINE bool constexpr
+  DDZ_NO_DISCARD DDZ_INLINE_CONSTEXPR bool
   operator<(const StringRef &other) const noexcept {
     return compare(other) < 0;
   }
 
-  DDZ_NO_DISCARD DDZ_INLINE bool constexpr
+  DDZ_NO_DISCARD DDZ_INLINE_CONSTEXPR bool
   operator==(const StringRef &other) const noexcept {
     return other.src == src || compare(other) == 0;
   }
+
+  DDZ_NO_DISCARD DDZ_CONSTEXPR StringRef &
+  operator=(const StringRef &) noexcept = default;
+
+  DDZ_NO_DISCARD DDZ_CONSTEXPR StringRef &
+  operator=(StringRef &&) noexcept = default;
 
   friend std::ostream &operator<<(std::ostream &src, const StringRef &ref) {
     src << ref.src;
     return src;
   }
 
-private:
+protected:
   /// 对于memcmp的封装，所有该类重载的操作符最终都会调用该函数
   DDZ_NO_DISCARD_INLINE_CONSTEXPR static int
   compareMem(const char *left, const char *right, size_t size) {
@@ -76,9 +87,9 @@ private:
     return ::memcmp(left, right, size);
   }
 
-  ///指向代理对象的源指针以及字符串长度
+  /// 指向代理对象的源指针以及字符串长度
   const char *src = nullptr;
-  const size_t len = 0;
+  size_t len = 0;
 };
 
 } // namespace ddz

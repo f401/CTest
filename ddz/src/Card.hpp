@@ -10,7 +10,6 @@
 
 namespace ddz {
 
-
 struct Card {
   CardAttribute flower;
   StringRef displayNum;
@@ -31,6 +30,7 @@ struct Card {
   DDZ_INLINE_CONSTEXPR bool operator==(const Card &card) const noexcept {
     return realNum == card.realNum;
   }
+
 };
 
 } // namespace ddz

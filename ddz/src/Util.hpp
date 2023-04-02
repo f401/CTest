@@ -5,12 +5,12 @@
 
 namespace ddz::util {
 
-::ddz::StringRef getTimeAsString();
+::ddz::StringRef getTimeAsString() noexcept;
 
 ::ddz::StringRef concatString(const char *data1, const char *data2,
-                              size_t data1Len, size_t data2Len);
+                              size_t data1Len, size_t data2Len) noexcept;
 
-DDZ_INLINE ::ddz::StringRef concatString(const char *data1, const char *data2) {
+DDZ_INLINE ::ddz::StringRef concatString(const char *data1, const char *data2) noexcept {
   return concatString(data1, data2, ::strlen(data1), ::strlen(data2));
 }
 

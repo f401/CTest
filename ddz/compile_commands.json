@@ -1,17 +1,32 @@
 [
     {
-        "command": "c++ -c -o CardGroup.o -g -O2 CardGroup.cpp",
+        "command": "c++ -c -g -O2 -Wall -std=c++17 -o objects/CardGroup.o CardGroup.cpp",
         "directory": "/opt/c/CTest/ddz/src",
         "file": "/opt/c/CTest/ddz/src/CardGroup.cpp"
     },
     {
-        "command": "c++ -c -o CardUtil.o -g -O2 CardUtil.cpp",
+        "command": "c++ -c -g -O2 -Wall -std=c++17 -o objects/CardUtil.o CardUtil.cpp",
         "directory": "/opt/c/CTest/ddz/src",
         "file": "/opt/c/CTest/ddz/src/CardUtil.cpp"
     },
     {
-        "command": "c++ -c -o main.o -g -O2 main.cpp",
+        "command": "c++ -c -g -O2 -Wall -std=c++17 -o objects/Log.o Log.cpp",
+        "directory": "/opt/c/CTest/ddz/src",
+        "file": "/opt/c/CTest/ddz/src/Log.cpp"
+    },
+    {
+        "command": "c++ -c -g -O2 -Wall -std=c++17 -o objects/Util.o Util.cpp",
+        "directory": "/opt/c/CTest/ddz/src",
+        "file": "/opt/c/CTest/ddz/src/Util.cpp"
+    },
+    {
+        "command": "c++ -c -g -O2 -Wall -std=c++17 -o objects/main.o main.cpp",
         "directory": "/opt/c/CTest/ddz/src",
         "file": "/opt/c/CTest/ddz/src/main.cpp"
+    },
+    {
+        "command": "c++ -c -g -O2 -Wall -std=c++17 -o objects/SysFuncs.o platform/unix/SysFuncs.cpp",
+        "directory": "/opt/c/CTest/ddz/src",
+        "file": "/opt/c/CTest/ddz/src/platform/unix/SysFuncs.cpp"
     }
 ]
