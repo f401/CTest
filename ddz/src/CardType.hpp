@@ -27,7 +27,7 @@ class CardType {
 protected:
   weight_t weight;
   card_type_t type;
-  Card insteadOf;
+  Card insteadOf; // 一种方式比较两个类型的大小
 
 public:
   DDZ_INLINE_CONSTEXPR CardType(weight_t weight, card_type_t type, Card min)
@@ -52,6 +52,13 @@ public:
 
   virtual CardType *copy() const { return new CardType(*this); }
 
+  DDZ_NO_DISCARD DDZ_FORCE_INLINE weight_t getWeight() const noexcept {
+    return weight;
+  }
+
+  DDZ_NO_DISCARD DDZ_FORCE_INLINE card_type_t getCardType() const noexcept {
+    return type;
+  }
 };
 
 } // namespace ddz

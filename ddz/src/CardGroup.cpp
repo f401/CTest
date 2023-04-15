@@ -28,7 +28,7 @@ CardGroup CardGroup::whatType(CardList list) {
 
   // 统计最多卡以及最少卡
   size_t n = list.size();
-  std::pair<const Card *, size_t> maxCnt, minCnt;
+  std::pair<const Card *, int> maxCnt, minCnt(nullptr, -1);
   for (const Card &card : list) {
     const size_t &current = countmap[card];
     if (current > maxCnt.second) {

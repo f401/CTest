@@ -25,8 +25,9 @@ void testCardType() {
   Card three(CardAttributes::FangKuai, StringPool::THREE, 0);
   Card four(CardAttributes::FangKuai, StringPool::FOUR, 1);
   Card five(CardAttributes::FangKuai, StringPool::FIVE, 2);
-  CardList list = {three, three, three, four, four, four, five, five, five};
-  CardGroup::whatType(list);
+  CardList list = {three, three, four, four, five, five};
+  CardGroup result = CardGroup::whatType(list);
+  std::cout << result.cardType().getCardType() << std::endl;
 }
 
 void testSendCard() {
@@ -50,7 +51,8 @@ void testSendCard() {
   }
 }
 
+
 int main(int argc, char *argv[]) {
-  testSendCard();
+	testCardType();
   return 0;
 }
