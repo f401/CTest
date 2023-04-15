@@ -32,7 +32,7 @@ public:
 
   void info(const ::ddz::StringRef &ref);
 
-  DDZ_INLINE LogBuffer &getBuffer() noexcept { return *buffer; }
+  DDZ_FORCE_INLINE LogBuffer &getBuffer() noexcept { return *buffer; }
 
 protected:
   LogBuffer *buffer;

@@ -30,8 +30,13 @@ struct Card {
   DDZ_INLINE_CONSTEXPR bool operator==(const Card &card) const noexcept {
     return realNum == card.realNum;
   }
-
 };
 
+DDZ_INLINE std::ostream &operator<<(std::ostream &stream, const Card &card) noexcept {
+  std::cout << card.realNum << std::endl;
+  return stream;
+}
+
 } // namespace ddz
+
 #endif /* end of include guard: __DDZ_CARD_HPP__ */

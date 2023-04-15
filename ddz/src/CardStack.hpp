@@ -28,7 +28,8 @@ public:
     this->top = new CardGroup(*newer);
   }
 
-  DDZ_INLINE bool is_top_player(Player &other) { return *owner == other; }
+  DDZ_FORCE_INLINE bool is_top_player(Player &other) { return *owner == other; }
+
   bool push(Player *owner, CardGroup *newer) {
     if (*top < *newer) {
       if (top != nullptr) {

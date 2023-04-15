@@ -33,10 +33,10 @@ public:
   StringRef(StringRef &&) noexcept = default;
 
   /// 返回所代理的指针
-  DDZ_NO_DISCARD DDZ_INLINE const char *data() const noexcept { return src; }
+  DDZ_NO_DISCARD DDZ_FORCE_INLINE const char *data() const noexcept { return src; }
 
   /// 返回std::string版本的代理对象
-  DDZ_NO_DISCARD DDZ_INLINE std::string cppStr() const noexcept {
+  DDZ_NO_DISCARD DDZ_FORCE_INLINE std::string cppStr() const noexcept {
     return std::string(src);
   }
 
@@ -91,6 +91,10 @@ protected:
   const char *src = nullptr;
   size_t len = 0;
 };
+
+DDZ_CONSTEXPR DDZ_FORCE_INLINE StringRef operator""_dsr(const char *src, size_t len) noexcept {
+  return StringRef(src, len);
+}
 
 } // namespace ddz
 

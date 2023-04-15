@@ -7,6 +7,10 @@
 #include <cstdlib>
 #include <vector>
 
+#ifdef DDZ_USE_STL_SHUFFLE
+#include <random>
+#endif
+
 namespace ddz {
 
 class Player;
@@ -19,11 +23,17 @@ public:
   using std::vector<T>::size;
   using std::vector<T>::at;
   using std::vector<T>::begin;
+  using std::vector<T>::end;
 
-  void shuffle() noexcept {
+  DDZ_INLINE void shuffle() noexcept {
+#ifdef DDZ_USE_STL_SHUFFLE
+    static std::mt19937 randomer(std::random_device{}());
+    std::shuffle(begin(), end(), randomer);
+#else
     for (size_t i = 0; i < this->size(); ++i) {
       std::swap(at(i), at(rand() % size()));
     }
+#endif
   }
 
   DDZ_INLINE void sort() noexcept {

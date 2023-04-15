@@ -18,16 +18,16 @@ public:
       delete type;
   }
 
-  DDZ_INLINE CardGroup(const CardGroup &src) : list(src.list) {
+  DDZ_FORCE_INLINE CardGroup(const CardGroup &src) : list(src.list) {
     type = src.type->copy();
   }
 
-  DDZ_INLINE CardGroup(CardGroup &&src) : list(src.list) {
+  DDZ_FORCE_INLINE CardGroup(CardGroup &&src) : list(src.list) {
     type = src.type;
     src.type = nullptr;
   }
 
-  DDZ_INLINE CardGroup &operator=(const CardGroup &src) {
+  DDZ_FORCE_INLINE CardGroup &operator=(const CardGroup &src) {
     list = src.list;
     if (type != nullptr)
       delete type;
@@ -35,7 +35,7 @@ public:
     return *this;
   }
 
-  DDZ_INLINE CardGroup &operator=(CardGroup &&src) {
+  DDZ_FORCE_INLINE CardGroup &operator=(CardGroup &&src) {
     list = src.list;
     if (type != nullptr)
       delete type;
@@ -44,10 +44,10 @@ public:
     return *this;
   }
 
-  DDZ_INLINE bool operator<(const CardGroup &other) const {
+  DDZ_FORCE_INLINE bool operator<(const CardGroup &other) const {
     return *type < *other.type;
   }
-  DDZ_INLINE bool operator>(const CardGroup &other) const {
+  DDZ_FORCE_INLINE bool operator>(const CardGroup &other) const {
     return *type > *other.type;
   }
   static CardGroup whatType(CardList list);

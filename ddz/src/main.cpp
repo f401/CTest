@@ -3,8 +3,9 @@
 #include "Card.hpp"
 #include "CardGroup.hpp"
 #include "CardUtil.hpp"
-#include "pools/StringPool.hpp"
 #include "Log.hpp"
+#include "pools/StringPool.hpp"
+#include <iterator>
 
 __attribute__((constructor(101))) void makeRandSeed() { srand(time(0)); }
 
@@ -32,7 +33,11 @@ void testSendCard() {
   using namespace ddz;
   PlayerList list = {Player(), Player(), Player()};
   CardList fullCard = makeFullCardList();
+  fullCard.shuffle();
   std::cout << "size: " << fullCard.size() << std::endl;
+
+  std::copy(fullCard.begin(), fullCard.end(), std::ostream_iterator<Card>(std::cout, "\n"));
+
   sendCardToEachPlayer(list, std::move(fullCard));
   using namespace std;
   for (auto i = list.begin(); i != list.end(); ++i) {
@@ -46,6 +51,6 @@ void testSendCard() {
 }
 
 int main(int argc, char *argv[]) {
-	testSendCard();
-	return 0; 
+  testSendCard();
+  return 0;
 }

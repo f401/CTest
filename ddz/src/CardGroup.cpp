@@ -8,7 +8,7 @@
 
 using namespace ddz;
 
-static DDZ_INLINE std::map<Card, size_t> cacCount(const CardList list) {
+static DDZ_FORCE_INLINE std::map<Card, size_t> cacCount(const CardList list) {
   std::map<Card, size_t> result = {};
   for (const auto &value : list) {
     result[value] = result[value] + 1;
