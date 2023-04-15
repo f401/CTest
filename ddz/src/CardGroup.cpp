@@ -1,7 +1,7 @@
 #include "CardGroup.hpp"
 #include "CardUtil.hpp"
 #include "Collections.hpp"
-#include "pools/CardRealNumPool.hpp"
+#include "pools/CardRealNumPool.h"
 #include "pools/StringPool.hpp"
 #include <cstdio>
 #include <map>

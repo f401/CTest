@@ -5,6 +5,7 @@
 #include "CardUtil.hpp"
 #include "Log.hpp"
 #include "pools/StringPool.hpp"
+#include "pools/CardTypeWeightPool.h"
 #include <iterator>
 
 __attribute__((constructor(101))) void makeRandSeed() { srand(time(0)); }
