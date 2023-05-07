@@ -36,6 +36,14 @@ public:
 #endif
   }
 
+#ifdef DDZ_USE_STL_SHUFFLE
+  DDZ_INLINE void __shuffle() noexcept {
+    for (size_t i = 0; i < this->size(); ++i) {
+      std::swap(at(i), at(rand() % size()));
+    }
+  }
+#endif
+
   DDZ_INLINE void sort() noexcept {
     std::sort(this->begin(), this->end(),
               [](const T &a, const T &b) { return a.realNum > b.realNum; });

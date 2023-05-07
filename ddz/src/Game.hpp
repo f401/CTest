@@ -40,7 +40,6 @@ public:
     sendCardToLandOwner();
     size_t currentTurn = 0;
     for (;;) {
-
       if (++currentTurn == 4) {
         currentTurn = 0;
       }
