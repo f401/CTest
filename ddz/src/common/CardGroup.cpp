@@ -4,6 +4,7 @@
 #include "pools/CardRealNumPool.h"
 #include "pools/StringPool.hpp"
 #include <cstdio>
+#include <limits.h>
 #include <map>
 
 using namespace ddz;
@@ -28,7 +29,7 @@ CardGroup CardGroup::whatType(CardList list) {
 
   // 统计最多卡以及最少卡
   size_t n = list.size();
-  std::pair<const Card *, int> maxCnt, minCnt(nullptr, -1);
+  std::pair<const Card *, size_t> maxCnt, minCnt(nullptr, SIZE_MAX);
   for (const Card &card : list) {
     const size_t &current = countmap[card];
     if (current > maxCnt.second) {
