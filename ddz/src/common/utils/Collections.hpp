@@ -36,7 +36,7 @@ public:
 #endif
   }
 
-#ifdef DDZ_USE_STL_SHUFFLE
+#ifdef BENCHMARK_BUILD
   DDZ_INLINE void __shuffle() noexcept {
     for (size_t i = 0; i < this->size(); ++i) {
       std::swap(at(i), at(rand() % size()));

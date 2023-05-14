@@ -5,7 +5,7 @@
 
 #include "CardGroup.hpp"
 #include "CardStack.hpp"
-#include "CardUtil.hpp"
+#include "utils/CardUtil.hpp"
 #include "Player.hpp"
 
 namespace ddz {

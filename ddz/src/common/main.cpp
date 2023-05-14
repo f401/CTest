@@ -2,8 +2,7 @@
 
 #include "Card.hpp"
 #include "CardGroup.hpp"
-#include "CardUtil.hpp"
-#include "Log.hpp"
+#include "utils/CardUtil.hpp"
 #include "pools/StringPool.hpp"
 #include "pools/CardTypeWeightPool.h"
 #include <iterator>
@@ -53,7 +52,9 @@ void testSendCard() {
 }
 
 
+#ifndef BENCHMARK_BUILD
 int main(int argc, char *argv[]) {
 	testCardType();
   return 0;
 }
+#endif

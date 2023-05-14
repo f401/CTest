@@ -2,7 +2,7 @@
 #define __DDZ_CARDTYPE_HPP__
 
 #include "Card.hpp"
-#include "Collections.hpp"
+#include "utils/Collections.hpp"
 #include "pools/CardTypeWeightPool.h"
 
 namespace ddz {

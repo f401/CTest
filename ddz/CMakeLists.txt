@@ -3,7 +3,7 @@ include(CheckIncludeFile)
 include(CheckFunctionExists)
 project(DDZ)
 
-aux_source_directory(${PROJECT_SOURCE_DIR}/src SRCS)
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/common SRCS)
 
 macro(add_compile_macro defs)
 	add_definitions("-D${defs}")
