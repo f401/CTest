@@ -1,7 +1,7 @@
 #ifndef PRINT_UTILS_HPP
 #define PRINT_UTILS_HPP
 
-namespace downloader::utils
+namespace net::utils
 {
 ///向标准错误流输出
 void printError(const char*, ...) __attribute__((format(printf, 1, 2)));

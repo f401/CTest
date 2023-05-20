@@ -7,10 +7,10 @@ extern "C" {
 #include <sys/socket.h>
 }
 
-#include "Defines.hpp"
+#include "NetDefs.hpp"
 #include "PrintUtils.hpp"
 
-namespace downloader {
+namespace net {
 class DNSServer {
 public:
   DNSServer() = default;

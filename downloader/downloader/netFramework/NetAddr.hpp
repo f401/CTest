@@ -1,12 +1,11 @@
 #ifndef NETADDR_H
 #define NETADDR_H
 
-#include "Defines.hpp"
 #include "DomainNameServer.hpp"
 #include <stdint.h>
 #include <string.h>
 
-namespace downloader {
+namespace net {
 class Address {
 public:
   static Address create(const IP_t ip, port_t port,

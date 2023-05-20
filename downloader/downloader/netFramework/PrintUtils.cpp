@@ -2,7 +2,7 @@
 #include <cstdarg>
 #include <cstdio>
 
-namespace downloader::utils {
+namespace net::utils {
 void __attribute__((format(printf, 1, 2))) printError(const char *src, ...) {
   va_list list;
   va_start(list, src);

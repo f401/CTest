@@ -9,7 +9,7 @@ extern "C" {
 #include <sys/socket.h>
 }
 
-namespace downloader {
+namespace net {
 class Socket {
 public:
   static Socket createSocket() {
