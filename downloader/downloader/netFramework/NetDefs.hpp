@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-typedef char* IP_t;
+typedef const char* IP_t;
 typedef uint16_t port_t;
 typedef int fd_t;
 

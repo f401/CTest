@@ -3,12 +3,31 @@ include(CheckIncludeFile)
 include(CheckFunctionExists)
 project(DDZ)
 
+option(BENCHMARK_BUILD OFF "Run Benchmarks")
+
 aux_source_directory(${PROJECT_SOURCE_DIR}/src/common SRCS)
+aux_source_directory(${PROJECT_SOURCE_DIR}/src/common/utils __SRCS)
+
+list(APPEND SRCS ${__SRCS})
+
+include_directories(${PROJECT_SOURCE_DIR}/src/common)
 
 macro(add_compile_macro defs)
 	add_definitions("-D${defs}")
 endmacro()
 
+if (BENCHMARK_BUILD)
+	find_package(benchmark REQUIRED)
+	add_compile_macro(BENCHMARK_BUILD)
+	list(APPEND SRCS ${PROJECT_SOURCE_DIR}/benchmarks/main.cpp)
+	include_directories(APPEND ${benchmark_INCLUDE_DIRS})
+endif()
+
+add_executable(main ${SRCS})
+
+if (BENCHMARK_BUILD)
+	target_link_libraries(main PRIVATE benchmark::benchmark)
+endif()
 
 function(checkAndDefine fileName defineAs)
 	check_include_file("${fileName}" "${defineAs}")
@@ -17,4 +36,3 @@ endfunction()
 
 check_function_exists(strdup HAVE_STRDUP)
 
-add_executable(main ${SRCS} ${PLAT_SRCS})

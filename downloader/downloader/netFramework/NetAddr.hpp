@@ -8,7 +8,7 @@
 namespace net {
 class Address {
 public:
-  static Address create(const IP_t ip, port_t port,
+  static Address create(IP_t ip, port_t port,
                         const DNSServer &server = DNSServer()) {
     Address addr(strdup(server.process(ip)), port);
     return addr;

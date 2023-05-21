@@ -46,6 +46,12 @@ public:
     return ::connect(fd->get(), (struct sockaddr *)&sock, sizeof(sock));
   }
 
+  void setTimeout(int seconds, int ms) {
+    struct timeval __timeout = {seconds, ms};
+    setsockopt(fd->get(), SOL_SOCKET, SO_RCVTIMEO, &__timeout,
+               sizeof(__timeout));
+  }
+
 protected:
   ClientSocket(int fd) : Socket(fd) {}
   bool connected = false;

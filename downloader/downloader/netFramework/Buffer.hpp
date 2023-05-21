@@ -9,6 +9,8 @@ namespace net {
 class Buffer {
 public:
   Buffer(void *buf, size_t len) : target(buf), len(len) {}
+  Buffer(const void *buf, size_t len)
+      : target(const_cast<void *>(buf)), len(len) {}
 
   virtual ~Buffer() {}
 
@@ -23,6 +25,8 @@ public:
 
   virtual Buffer &operator=(const Buffer &) = delete;
   virtual Buffer &operator=(Buffer &&) = default;
+
+  void clear() { ::memset(target, 0, len); }
 
 protected:
   Buffer() {}
