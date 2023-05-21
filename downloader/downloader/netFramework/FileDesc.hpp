@@ -2,11 +2,13 @@
 #define __NET_FILE_DESC_HPP__
 
 extern "C" {
+#include <fcntl.h>
 #include <unistd.h>
 }
 
 #include "Buffer.hpp"
 #include "NetDefs.hpp"
+#include "PrintUtils.hpp"
 
 namespace net {
 class FileDescriptor final {
@@ -18,11 +20,20 @@ public:
     }
   }
 
-  ssize_t write(Buffer &buf) const {
+  static FileDescriptor openFile(const char* name, int flag, mode_t mode = 0) {
+    fd_t fd = ::open(name, flag, mode);
+    if (fd == -1)
+      utils::printSystemError("Open Error");
+    return FileDescriptor(fd);
+  }
+
+  ssize_t write(const Buffer &buf) const {
     return ::write(fd, buf.get(), buf.size());
   }
 
   ssize_t read(Buffer &buf) const { return ::read(fd, buf.get(), buf.size()); }
+
+  fd_t get() const { return fd; }
 
   FileDescriptor(const FileDescriptor &) = delete;
   FileDescriptor &operator=(const FileDescriptor &) = delete;

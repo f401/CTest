@@ -4,7 +4,6 @@ export CXX_FlAGS:=-g -O2 -Wall -std=c++17 -I$(pwd)
 export LD_FLAGS:=
 export RM:= rm -f
 
-srcs := $(wildcard *.cpp platform/unix/*.cpp utils/*.cpp)
 objects := $(patsubst %.cpp, %.o, $(srcs))
 
 all: main clean

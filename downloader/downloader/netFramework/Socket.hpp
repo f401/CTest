@@ -1,6 +1,7 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
+#include "FileDesc.hpp"
 #include "NetAddr.hpp"
 
 extern "C" {
@@ -10,14 +11,27 @@ extern "C" {
 }
 
 namespace net {
+
 class Socket {
 public:
-  static Socket createSocket() {
+  FileDescriptor *getFileDesc() { return fd; }
+  Socket(int fd) : fd(new FileDescriptor(fd)) {}
+
+  virtual ~Socket() { delete fd; }
+  Socket(Socket &&) = default;
+
+protected:
+  FileDescriptor *fd = nullptr;
+};
+
+class ClientSocket : public Socket {
+public:
+  static ClientSocket createSocket() {
     return ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   }
-  
-  static Socket createConnect(const Address &addr) {
-    Socket sock = createSocket();
+
+  static ClientSocket createConnect(const Address &addr) {
+    ClientSocket sock = createSocket();
     sock.connect(addr);
     return sock;
   }
@@ -29,15 +43,14 @@ public:
     sock.sin_family = AF_INET;
     sock.sin_port = ::htons(addr.getPort());
 
-    return ::connect(fd, (struct sockaddr *)&sock, sizeof(sock));
+    return ::connect(fd->get(), (struct sockaddr *)&sock, sizeof(sock));
   }
 
 protected:
-  Socket(int fd) : fd(fd) {}
-  int fd = -1;
+  ClientSocket(int fd) : Socket(fd) {}
   bool connected = false;
 };
 
-}; // namespace downloader
+}; // namespace net
 
 #endif /* end of include guard: SOCKET_H */

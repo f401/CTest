@@ -15,10 +15,13 @@ public:
   void *get() { return target; }
   size_t size() { return len; }
 
-  Buffer(const Buffer &) = default;
+  const void *get() const { return target; }
+  const size_t size() const { return len; }
+
+  Buffer(const Buffer &) = delete;
   Buffer(Buffer &&) = default;
 
-  virtual Buffer &operator=(const Buffer &) = default;
+  virtual Buffer &operator=(const Buffer &) = delete;
   virtual Buffer &operator=(Buffer &&) = default;
 
 protected:
