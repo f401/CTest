@@ -1,4 +1,5 @@
 #include "PrintUtils.hpp"
+#include "NetAddr.hpp"
 #include <cstdarg>
 #include <cstdio>
 

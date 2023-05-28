@@ -10,6 +10,8 @@ extern "C" {
 #include <sys/socket.h>
 }
 
+#include <memory>
+
 namespace net {
 
 class Socket {
@@ -39,16 +41,18 @@ public:
 
   static ClientSocket createConnect(const Address &addr) {
     ClientSocket sock = createSocket();
-    sock.connect(addr);
+    if (sock.connect(addr) == -1) {
+      utils::printSystemError("Error when connecting.");
+    }
     return sock;
   }
 
   virtual int connect(const Address &addr) {
     struct ::sockaddr_in sock;
     ::memset(&sock, 0, sizeof(sock));
-    sock.sin_addr.s_addr = ::inet_addr(addr.getIP());
+    sock.sin_addr.s_addr = addr.getInternetAddress();
+    sock.sin_port = addr.getEndianPort();
     sock.sin_family = AF_INET;
-    sock.sin_port = ::htons(addr.getPort());
 
     return ::connect(fd->get(), (struct sockaddr *)&sock, sizeof(sock));
   }
@@ -66,8 +70,37 @@ protected:
 class ServerSocket : public Socket {
 public:
   static ServerSocket createSocket() {
-    return ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    return ServerSocket(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
   }
+
+  virtual int bind(const Address &addr) const noexcept {
+    struct ::sockaddr_in sock;
+    ::memset(&sock, 0, sizeof(sock));
+    sock.sin_addr.s_addr = addr.getInternetAddress();
+    sock.sin_port = addr.getEndianPort();
+    sock.sin_family = AF_INET;
+
+    return ::bind(fd->get(), (struct sockaddr *)&sock, sizeof(sock));
+  }
+
+  virtual int listen(int maxCount) const noexcept {
+    return ::listen(fd->get(), maxCount);
+  }
+
+  virtual std::pair<std::unique_ptr<FileDescriptor>, Address>
+  acceptWithClientInfo() const noexcept {
+    sockaddr_in addr;
+    socklen_t size = 16;
+    fd_t clientFd = ::accept(fd->get(), (struct sockaddr *)&addr, &size);
+    return std::make_pair(
+        std::make_unique<FileDescriptor>(clientFd),
+        Address::create(inet_ntoa(addr.sin_addr), ::ntohs(addr.sin_port)));
+  }
+
+  virtual std::unique_ptr<FileDescriptor> accept() const noexcept {
+    return std::make_unique<FileDescriptor>(::accept(fd->get(), NULL, NULL));
+  }
+
 protected:
   ServerSocket(int fd) : Socket(fd) {}
 };
