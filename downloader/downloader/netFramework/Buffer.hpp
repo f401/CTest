@@ -4,63 +4,88 @@
 #include "NetDefs.hpp"
 #include <cstdlib>
 #include <cstring>
+#include <exception>
+#include <type_traits>
 
 namespace net {
-class Buffer {
+
+template <class T>
+inline constexpr bool not_has_const = std::is_same_v<T, std::remove_const_t<T>>;
+
+template <class T> class Buffer {
+protected:
+  T *target = nullptr;
+  size_t len = 0;
+
 public:
-  Buffer(void *buf, size_t len) : target(buf), len(len) {}
-  Buffer(const void *buf, size_t len)
-      : target(const_cast<void *>(buf)), len(len) {}
+  Buffer(T *buf, size_t len) noexcept : target(buf), len(len) {}
+  virtual ~Buffer() noexcept {}
 
-  virtual ~Buffer() {}
+  T *get() noexcept { return this->target; }
+  size_t size() noexcept { return this->len; }
 
-  void *get() { return target; }
-  size_t size() { return len; }
-
-  const void *get() const { return target; }
-  const size_t size() const { return len; }
+  const T *get() const noexcept { return this->target; }
+  const size_t size() const noexcept { return this->len; }
 
   Buffer(const Buffer &) = delete;
-  Buffer(Buffer &&) = default;
+  Buffer(Buffer &&) noexcept = default;
 
   virtual Buffer &operator=(const Buffer &) = delete;
-  virtual Buffer &operator=(Buffer &&) = default;
+  virtual Buffer &operator=(Buffer &&) noexcept = default;
 
-  void clear() { ::memset(target, 0, len); }
-
-protected:
-  Buffer() {}
-  void *target = nullptr;
-  size_t len = 0;
-};
-
-class BufferAlloc : public Buffer {
-public:
-  BufferAlloc(size_t len) : Buffer(::calloc(len, 1), len) {}
-
-  BufferAlloc(const BufferAlloc &other) {
-    void *target = ::calloc(other.len, 1);
-    ::memmove(target, other.target, other.len);
-    Buffer(target, other.len);
+  template <typename Immu = Buffer<const T>>
+  std::enable_if_t<not_has_const<T>, Immu>
+  convertToImmutable() const {
+    return Buffer<const T>(this->target, this->len);
   }
 
-  virtual BufferAlloc &operator=(const BufferAlloc &other) {
-    if (this != &other) {
-      this->~BufferAlloc();
-      void *target = ::calloc(other.len, 1);
-      ::memmove(target, other.target, other.len);
+  void clear() noexcept { ::memset(this->target, 0, this->len); }
+};
 
-      this->target = target;
+template <class T> class AllocBuffer : public Buffer<T> {
+private:
+  using Buffer<T>::Buffer;
+  static void *copyData(const AllocBuffer &buf) noexcept {
+    void *n = ::calloc(0, buf.len);
+    ::memmove(n, buf.target, buf.len);
+    return n;
+  }
+
+public:
+  AllocBuffer(size_t len) noexcept : Buffer<T>(::calloc(len, 1), len) {}
+
+  AllocBuffer(const AllocBuffer<T> &other) noexcept {
+    Buffer(copyData(other), other.len);
+  }
+
+  template <typename Immu = AllocBuffer<const T>>
+  std::enable_if_t<not_has_const<T>, Immu>
+  convertToImmutable() const {
+    return AllocBuffer<const T>(this->target, this->len);
+  }
+
+  virtual AllocBuffer &operator=(const AllocBuffer &other) noexcept {
+    if (this != &other) {
+      this->~AllocBuffer();
+      this->target = copyData(other);
       this->len = other.len;
     }
     return *this;
   }
 
-  virtual ~BufferAlloc() override {
-    if (target != nullptr)
-      free(target);
+  virtual ~AllocBuffer() noexcept override {
+    if constexpr (std::is_same_v<T, std::remove_const_t<T>>) {
+      if (this->target != nullptr)
+        free(this->target);
+    }
   }
 };
+
+using ImmutableBuffer = Buffer<const void>;
+using MutableBuffer = Buffer<void>;
+
+using ImmutableAllocBuffer = AllocBuffer<const void>;
+using MutableAllocBuffer = AllocBuffer<void>;
 } // namespace net
 
 #endif /* end of include guard: __NET_FW_BUFFER_HPP__ */

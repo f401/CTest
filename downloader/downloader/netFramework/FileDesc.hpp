@@ -11,7 +11,7 @@ extern "C" {
 #include "PrintUtils.hpp"
 
 namespace net {
-class FileDescriptor final {
+class FileDescriptor {
 public:
   FileDescriptor(fd_t fd) : fd(fd) {}
   ~FileDescriptor() {
@@ -27,13 +27,13 @@ public:
     return FileDescriptor(fd);
   }
 
-  ssize_t write(const Buffer &buf) const { return write(buf, buf.size()); }
+  ssize_t write(const ImmutableBuffer &buf) const { return write(buf, buf.size()); }
 
-  ssize_t write(const Buffer &buf, size_t size) const {
+  ssize_t write(const ImmutableBuffer &buf, size_t size) const {
     return ::write(fd, buf.get(), size);
   }
 
-  ssize_t read(Buffer &buf) const { return ::read(fd, buf.get(), buf.size()); }
+  ssize_t read(MutableBuffer &buf) const { return ::read(fd, buf.get(), buf.size()); }
 
   fd_t get() const { return fd; }
 

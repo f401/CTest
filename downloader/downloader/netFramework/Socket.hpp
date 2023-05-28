@@ -14,6 +14,10 @@ namespace net {
 
 class Socket {
 public:
+  static Socket createSocket() {
+    return ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  }
+
   FileDescriptor *getFileDesc() { return fd; }
   Socket(int fd) : fd(new FileDescriptor(fd)) {}
 
@@ -25,6 +29,9 @@ protected:
 };
 
 class ClientSocket : public Socket {
+protected:
+  bool connected = false;
+
 public:
   static ClientSocket createSocket() {
     return ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -54,7 +61,15 @@ public:
 
 protected:
   ClientSocket(int fd) : Socket(fd) {}
-  bool connected = false;
+};
+
+class ServerSocket : public Socket {
+public:
+  static ServerSocket createSocket() {
+    return ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  }
+protected:
+  ServerSocket(int fd) : Socket(fd) {}
 };
 
 }; // namespace net
