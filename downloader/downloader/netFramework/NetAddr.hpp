@@ -2,20 +2,21 @@
 #define NETADDR_H
 
 #include "DomainNameServer.hpp"
+#include "UniquePointer.hpp"
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 namespace net {
 class Address {
 public:
-  static Address create(IP_t ip, port_t port,
+  static Address* create(IP_t ip, port_t port,
                         const DNSServer &server = DNSServer()) noexcept {
-    Address addr(strdup(server.process(ip)), port);
-    return addr;
+    return new Address(strdup(server.process(ip)), port);
   }
 
-  const IP_t getIP() const noexcept { return ip; }
-  const port_t getPort() const noexcept { return port; }
+  IP_t getIP() const noexcept { return ip; }
+  port_t getPort() const noexcept { return port; }
   IP_t getIP() noexcept { return ip; }
   port_t &getPort() noexcept { return port; }
 
@@ -35,15 +36,17 @@ protected:
 
 class AddrInetAny : public Address {
 public:
-  static AddrInetAny create(port_t port) { return AddrInetAny(port); }
+  static AddrInetAny* create(port_t port) { return new AddrInetAny(port); }
 
   virtual in_addr_t getInternetAddress() const noexcept override {
     return ::htonl(INADDR_ANY);
   }
 
 protected:
-  AddrInetAny(port_t port) noexcept : Address("0.0.0.0", port) {}
+  AddrInetAny(port_t port) noexcept : Address(strdup("0.0.0.0"), port) {}
 };
+
+typedef utils::UniquePointer<Address> Address_p;
 } // namespace net
 
 #endif /* end of include guard: NETADDR_H */

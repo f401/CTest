@@ -87,7 +87,7 @@ public:
     return ::listen(fd->get(), maxCount);
   }
 
-  virtual std::pair<std::unique_ptr<FileDescriptor>, Address>
+  virtual std::pair<std::unique_ptr<FileDescriptor>, Address_p>
   acceptWithClientInfo() const noexcept {
     sockaddr_in addr;
     socklen_t size = 16;

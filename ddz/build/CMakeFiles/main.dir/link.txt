@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wall CMakeFiles/main.dir/src/common/CardGroup.cpp.o CMakeFiles/main.dir/src/common/main.cpp.o CMakeFiles/main.dir/src/common/utils/CardUtil.cpp.o CMakeFiles/main.dir/src/common/utils/Util.cpp.o -o main 

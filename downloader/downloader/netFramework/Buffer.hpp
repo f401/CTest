@@ -39,15 +39,15 @@ public:
   size_t size() noexcept { return this->len; }
 
   const T *get() const noexcept { return this->target; }
-  const size_t size() const noexcept { return this->len; }
+  size_t size() const noexcept { return this->len; }
 
   Buffer(const Buffer &) = delete;
   Buffer(Buffer &&) noexcept = default;
 
-  virtual Buffer &operator=(const Buffer &) = delete;
-  virtual Buffer &operator=(Buffer &&) noexcept = default;
+  Buffer &operator=(const Buffer &) = delete;
+  Buffer &operator=(Buffer &&) noexcept = default;
 
-  virtual ImmutableType_t convertToImmutable() const {
+  virtual ImmutableType_t convertToImmutable() const noexcept {
     if constexpr (!std::is_same_v<ImmutableType_t, void>) {
       return *new Buffer<const T>(this->target, this->len);
     }
@@ -76,7 +76,7 @@ private:
 public:
   AllocBuffer(size_t len) noexcept : Buffer<T>(::calloc(len, 1), len) {}
 
-  static AllocBuffer<T>* create(size_t len) {
+  static AllocBuffer<T>* create(size_t len) noexcept {
 	  return new AllocBuffer<T>(len);
   }
 
@@ -84,13 +84,13 @@ public:
     Buffer(copyData(other), other.len);
   }
 
-  virtual ImmutableType_t convertToImmutable() const override {
+  virtual ImmutableType_t convertToImmutable() const noexcept override {
     if constexpr (!std::is_same_v<void, ImmutableType_t>) {
       return *new AllocBuffer<const T>(this->target, this->len);
     }
   }
 
-  virtual AllocBuffer &operator=(const AllocBuffer &other) noexcept {
+  AllocBuffer &operator=(const AllocBuffer &other) noexcept {
     if (this != &other) {
       this->~AllocBuffer();
       this->target = copyData(other);
