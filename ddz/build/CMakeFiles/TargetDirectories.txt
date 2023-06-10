@@ -1,3 +1,0 @@
-/opt/c/CTest/ddz/build/CMakeFiles/main.dir
-/opt/c/CTest/ddz/build/CMakeFiles/edit_cache.dir
-/opt/c/CTest/ddz/build/CMakeFiles/rebuild_cache.dir
