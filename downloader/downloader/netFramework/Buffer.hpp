@@ -75,9 +75,14 @@ private:
 
 public:
   AllocBuffer(size_t len) noexcept : Buffer<T>(::calloc(len, 1), len) {}
+  AllocBuffer(T* ptr, size_t len) noexcept: Buffer<T>(ptr, len) {}
 
   static AllocBuffer<T>* create(size_t len) noexcept {
 	  return new AllocBuffer<T>(len);
+  }
+
+  static AllocBuffer<T>* create(T* ptr, size_t len) noexcept {
+	  return new AllocBuffer<T>(ptr, len);
   }
 
   AllocBuffer(const AllocBuffer<T> &other) noexcept {
@@ -101,7 +106,7 @@ public:
 
   virtual ~AllocBuffer() noexcept override {
     if constexpr (!std::is_const_v<T>) {
-      if (this->target != nullptr)
+      if (this->target != nullptr && this->len != 0)
         free(this->target);
     }
   }
