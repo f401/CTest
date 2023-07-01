@@ -34,10 +34,20 @@ void __attribute__((unused)) server_test() {
   }
 }
 
+char reader(void *param) {
+  char result = fgetc((FILE* )param);
+  return result;
+}
+
 void __attribute__((unused)) url_test() {
-  net::utils::URL url("https://www.baidu.com/");
+  net::utils::URL url("https://www.baidu.com");
   net::http::HttpRequest request = net::http::HttpRequest::create(url);
-  printf("%s\n", (char* )request.build()->get());
+ 
+  FILE* file = fopen("./req", "r");
+  net::http::HttpHeader e = net::http::HttpHeader::from(reader, file);
+  fclose(file);
+  printf("%s\n", e.build().data());
+  
 }
 
 int main(int argc, char *argv[]) {
