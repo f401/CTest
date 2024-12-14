@@ -4,6 +4,8 @@ static void destroy() { gtk_main_quit(); }
 
 extern char _binary_my_png_start[], _binary_my_png_size[];
 
+int e = 3;
+
 int main(int argc, char *argv[]) {
   GtkWidget *window, *image;
   gtk_init(&argc, &argv);
